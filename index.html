@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- Tailwind CSS per lo stile -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body { font-family: 'Inter', sans-serif; }
+      .spinner { border-top-color: #3b82f6; animation: spin 1s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .new-row { animation: fadeIn 0.5s ease-out; }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      /* Stile per nascondere le frecce del date input */
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        display: none;
+        -webkit-appearance: none;
+      }
+      .date-btn-active {
+        background-color: #3b82f6 !important;
+        color: white !important;
+      }
+    </style>
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl">
+      
+      <!-- Intestazione -->
+      <div class="flex flex-wrap items-center justify-between mb-8 gap-4">
+        <div class="flex items-center space-x-3">
+            <svg class="w-10 h-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          <div>
+            <h1 class="text-3xl font-bold text-gray-800">ArrivApp</h1>
+            <p class="text-gray-500">Dashboard de Asistencia Escolar</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="text-right">
+                <p id="currentTime" class="text-2xl font-semibold text-gray-800"></p>
+                <p id="lastUpdated" class="text-sm text-gray-500">Actualizando...</p>
+            </div>
+            <a href="https://docs.google.com/spreadsheets/d/1-Yh7iAaGfuH65F7ntRIP6C82yH44gbsQ54Q4aWB-gng/edit#gid=0" target="_blank" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition shadow">
+              Check-in Manual
+            </a>
+        </div>
+      </div>
+
+      <!-- Barra dei Controlli Migliorata -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-4 bg-white rounded-xl shadow-md items-end">
+          <div>
+              <label for="date-picker" class="block text-sm font-medium text-gray-700 mb-1">Seleccionar Fecha</label>
+              <div class="flex items-center space-x-2">
+                <input type="date" id="date-picker" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                <button id="btn-today" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-semibold text-sm hover:bg-gray-300 transition">Hoy</button>
+                <button id="btn-yesterday" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-semibold text-sm hover:bg-gray-300 transition">Ayer</button>
+              </div>
+          </div>
+          <div class="relative">
+              <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Buscar Alumno</label>
+              <input type="search" id="search-input" placeholder="Escribe un nombre para filtrar..." class="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none top-7">
+                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                </svg>
+              </div>
+          </div>
+      </div>
+
+      <!-- Cards Riepilogative -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Alumnos Presentes</h2>
+          <p id="total-present" class="text-4xl font-bold text-green-500">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Alumnos Ausentes</h2>
+          <p id="total-absent" class="text-4xl font-bold text-red-500">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Alumnos con Retraso</h2>
+          <p id="total-late" class="text-4xl font-bold text-orange-500">0</p>
+        </div>
+      </div>
+
+      <!-- Contenuto principale a due colonne -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Colonna Sinistra: Check-in e Ritardi -->
+        <div>
+          <!-- Registro Check-in -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-xl font-semibold text-gray-700">Registro de Check-in</h3>
+                <button id="export-csv" class="bg-blue-500 text-white px-3 py-1 rounded-md text-sm font-semibold hover:bg-blue-600 transition">Exportar a CSV</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Hora Entrada</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Alumno</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Hora Salida</th>
+                  </tr>
+                </thead>
+                <tbody id="checkin-table" class="divide-y divide-gray-200"></tbody>
+              </table>
+            </div>
+          </div>
+           <!-- Lista Ritardi -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <h3 class="text-xl font-semibold text-gray-700 p-4 border-b">Llegadas con Retraso (después de las 9:01)</h3>
+             <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Hora</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Alumno</th>
+                  </tr>
+                </thead>
+                <tbody id="late-table" class="divide-y divide-gray-200"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colonna Destra: Assenti -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+          <h3 class="text-xl font-semibold text-gray-700 p-4 border-b">Alumnos No Registrados</h3>
+           <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Nombre del Alumno</th>
+                </tr>
+              </thead>
+              <tbody id="absent-table" class="divide-y divide-gray-200"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center mt-8 text-sm text-gray-400">
+        <p>&copy; 2025 ArrivApp Pilot</p>
+      </div>
+
+    </div>
+
+    <script>
+      // --- CONFIGURAZIONE ---
+      const CHECKIN_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ7JnFx7wWR8m2DwumfwUrjWIx2TJsTA3y80PE0VIgs4AmekzNfhFIBDoXg87m7BfvPOUbIDs0LGG-K/pub?gid=0&single=true&output=csv"; 
+      const ROSTER_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ7JnFx7wWR8m2DwumfwUrjWIx2TJsTA3y80PE0VIgs4AmekzNfhFIBDoXg87m7BfvPOUbIDs0LGG-K/pub?gid=1104412800&single=true&output=csv"; 
+
+      let fullCheckinData = [];
+      let allStudents = [];
+
+      function formatDate(date) {
+          const d = new Date(date);
+          let day = ('0' + d.getDate()).slice(-2);
+          let month = ('0' + (d.getMonth() + 1)).slice(-2);
+          let year = d.getFullYear();
+          return `${day}/${month}/${year}`;
+      }
+      
+      function formatDateForInput(date) {
+        const d = new Date(date);
+        let day = ('0' + d.getDate()).slice(-2);
+        let month = ('0' + (d.getMonth() + 1)).slice(-2);
+        let year = d.getFullYear();
+        return `${year}-${month}-${day}`;
+      }
+
+      async function fetchDataAndRender() {
+        const now = new Date();
+        const urlCheckin = CHECKIN_CSV_URL + '&t=' + now.getTime();
+        const urlRoster = ROSTER_CSV_URL + '&t=' + now.getTime();
+
+        try {
+          const [checkinResponse, rosterResponse] = await Promise.all([ fetch(urlCheckin), fetch(urlRoster) ]);
+          const checkinText = await checkinResponse.text();
+          const rosterText = await rosterResponse.text();
+
+          allStudents = rosterText.split('\n').slice(1).map(row => row.split(',')[1]?.trim()).filter(String);
+          const allCheckinRows = checkinText.split('\n').slice(1).filter(row => row.trim() !== '');
+          
+          fullCheckinData = allCheckinRows;
+          
+          renderDashboard(allStudents, allCheckinRows);
+
+          document.getElementById('lastUpdated').innerText = 'Última actualización: ' + now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+        } catch (error) {
+          console.error("Errore nel caricamento dei dati:", error);
+        }
+      }
+      
+      function renderDashboard(students, checkinRowsData) {
+          const selectedDate = document.getElementById('date-picker').value;
+          const dateString = formatDate(selectedDate);
+          const searchTerm = document.getElementById('search-input').value.toLowerCase();
+
+          const checkinRows = checkinRowsData.filter(row => {
+              const columns = row.split(',');
+              if (columns.length > 0 && columns[0]) {
+                  const timestampDate = columns[0].trim().split(' ')[0];
+                  return timestampDate === dateString;
+              }
+              return false;
+          });
+
+          const presentStudents = [];
+          const lateStudents = [];
+
+          checkinRows.forEach(row => {
+            const columns = row.split(',');
+            if (columns.length < 3) return;
+
+            const timestamp = columns[0].trim();
+            const studentName = columns[2].trim();
+            presentStudents.push(studentName);
+
+            const timePart = timestamp.split(' ')[1] || "00:00:00";
+            const [hour, minute] = timePart.split(':').map(Number);
+            if (hour > 9 || (hour === 9 && minute > 1)) {
+              lateStudents.push({ name: studentName, time: timestamp });
+            }
+          });
+          
+          let absentStudents = students.filter(student => !presentStudents.includes(student));
+
+          const filteredCheckinRows = checkinRows.filter(row => row.split(',')[2]?.trim().toLowerCase().includes(searchTerm));
+          const filteredLateStudents = lateStudents.filter(student => student.name.toLowerCase().includes(searchTerm));
+          const filteredAbsentStudents = absentStudents.filter(student => student.toLowerCase().includes(searchTerm));
+
+          document.getElementById('total-present').innerText = presentStudents.length;
+          document.getElementById('total-absent').innerText = absentStudents.length;
+          document.getElementById('total-late').innerText = lateStudents.length;
+
+          const checkinTableBody = document.getElementById('checkin-table');
+          checkinTableBody.innerHTML = '';
+          if (filteredCheckinRows.length === 0) {
+            checkinTableBody.innerHTML = '<tr><td colspan="3" class="text-center p-10 text-gray-500">No hay registros para la fecha o búsqueda seleccionada.</td></tr>';
+          } else {
+            filteredCheckinRows.reverse().forEach(row => {
+              const columns = row.split(',');
+              const tr = document.createElement('tr');
+              tr.className = 'new-row';
+              tr.innerHTML = `
+                  <td class="px-6 py-4"><div class="text-sm font-medium text-gray-900">${columns[0].trim()}</div></td>
+                  <td class="px-6 py-4"><div class="text-sm text-gray-500">${columns[2].trim()}</div></td>
+                  <td class="px-6 py-4"><div class="text-sm text-gray-400 italic">N/A</div></td>`;
+              checkinTableBody.appendChild(tr);
+            });
+          }
+
+          const absentTableBody = document.getElementById('absent-table');
+          absentTableBody.innerHTML = '';
+          if (filteredAbsentStudents.length === 0) {
+            absentTableBody.innerHTML = '<tr><td class="text-center p-10 text-gray-500">¡Todos los alumnos han llegado!</td></tr>';
+          } else {
+            filteredAbsentStudents.forEach(student => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `<td class="px-6 py-4"><div class="text-sm text-gray-500">${student}</div></td>`;
+              absentTableBody.appendChild(tr);
+            });
+          }
+          
+          const lateTableBody = document.getElementById('late-table');
+          lateTableBody.innerHTML = '';
+          if (filteredLateStudents.length === 0) {
+              lateTableBody.innerHTML = '<tr><td colspan="2" class="text-center p-10 text-gray-500">Ningún alumno ha llegado con retraso.</td></tr>';
+          } else {
+              filteredLateStudents.reverse().forEach(student => {
+                  const tr = document.createElement('tr');
+                  tr.className = 'new-row';
+                  tr.innerHTML = `
+                      <td class="px-6 py-4"><div class="text-sm font-medium text-red-500">${student.time}</div></td>
+                      <td class="px-6 py-4"><div class="text-sm text-gray-500">${student.name}</div></td>`;
+                  lateTableBody.appendChild(tr);
+              });
+          }
+      }
+
+      function exportToCSV() {
+          const selectedDate = document.getElementById('date-picker').value;
+          const dateString = formatDate(selectedDate);
+          
+          const checkinRowsToday = fullCheckinData.filter(row => {
+              const columns = row.split(',');
+              if (columns.length > 0 && columns[0]) {
+                  const timestampDate = columns[0].trim().split(' ')[0];
+                  return timestampDate === dateString;
+              }
+              return false;
+          });
+
+          let csvContent = "data:text/csv;charset=utf-8,Timestamp,StudentID,StudentName,ParentEmail,Status\n";
+          csvContent += checkinRowsToday.join("\n");
+
+          const encodedUri = encodeURI(csvContent);
+          const link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", `arrivapp_registro_${dateString.replace(/\//g, '-')}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      }
+
+      function updateClock() {
+        document.getElementById('currentTime').innerText = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const datePicker = document.getElementById('date-picker');
+        const searchInput = document.getElementById('search-input');
+        const exportButton = document.getElementById('export-csv');
+        const btnToday = document.getElementById('btn-today');
+        const btnYesterday = document.getElementById('btn-yesterday');
+
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        datePicker.value = formatDateForInput(today);
+        btnToday.classList.add('date-btn-active');
+        
+        fetchDataAndRender();
+        updateClock();
+        setInterval(fetchDataAndRender, 30000);
+        setInterval(updateClock, 1000);
+
+        function updateDateButtons() {
+            const selectedDate = datePicker.value;
+            if (selectedDate === formatDateForInput(today)) {
+                btnToday.classList.add('date-btn-active');
+                btnYesterday.classList.remove('date-btn-active');
+            } else if (selectedDate === formatDateForInput(yesterday)) {
+                btnYesterday.classList.add('date-btn-active');
+                btnToday.classList.remove('date-btn-active');
+            } else {
+                btnToday.classList.remove('date-btn-active');
+                btnYesterday.classList.remove('date-btn-active');
+            }
+        }
+
+        datePicker.addEventListener('change', () => {
+            updateDateButtons();
+            renderDashboard(allStudents, fullCheckinData);
+        });
+        searchInput.addEventListener('input', () => renderDashboard(allStudents, fullCheckinData));
+        exportButton.addEventListener('click', exportToCSV);
+
+        btnToday.addEventListener('click', () => {
+            datePicker.value = formatDateForInput(today);
+            updateDateButtons();
+            renderDashboard(allStudents, fullCheckinData);
+        });
+
+        btnYesterday.addEventListener('click', () => {
+            datePicker.value = formatDateForInput(yesterday);
+            updateDateButtons();
+            renderDashboard(allStudents, fullCheckinData);
+        });
+      });
+    </script>
+  </body>
+</html>

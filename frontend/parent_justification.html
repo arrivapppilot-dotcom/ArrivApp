@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArrivApp - Notificar Ausencia</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            overflow-y: auto;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen py-8 px-4">
+    
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto p-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4">
+                <svg class="w-10 h-10 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Notificar Ausencia o Retraso</h1>
+            <p class="text-gray-600">Complete el formulario para informar sobre la ausencia o llegada tarde de su hijo/a</p>
+        </div>
+
+        <!-- Info Box -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+                <svg class="w-5 h-5 text-blue-600 mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                <div class="text-sm text-blue-800">
+                    <p class="font-semibold mb-1">Información importante:</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Use el mismo correo electrónico registrado para su hijo/a en el sistema</li>
+                        <li>El colegio será notificado inmediatamente</li>
+                        <li>Esta notificación NO reemplaza la política oficial de asistencia del colegio</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form id="justificationForm" class="space-y-6">
+            <!-- Email -->
+            <div>
+                <label for="parent_email" class="block text-sm font-medium text-gray-700 mb-2">
+                    Correo Electrónico del Padre/Tutor *
+                </label>
+                <input 
+                    type="email" 
+                    id="parent_email" 
+                    name="parent_email" 
+                    required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="ejemplo@email.com"
+                >
+                <p class="text-xs text-gray-500 mt-1">Debe coincidir con el email registrado en el sistema</p>
+            </div>
+
+            <!-- Students List (populated after email validation) -->
+            <div id="studentsSection" class="hidden">
+                <label for="student_select" class="block text-sm font-medium text-gray-700 mb-2">
+                    Seleccionar Alumno/a *
+                </label>
+                <select 
+                    id="student_select" 
+                    name="student_id"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                >
+                    <option value="">Selecciona un alumno/a</option>
+                </select>
+            </div>
+
+            <!-- Date -->
+            <div>
+                <label for="absence_date" class="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de Ausencia/Retraso *
+                </label>
+                <input 
+                    type="date" 
+                    id="absence_date" 
+                    name="absence_date" 
+                    required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                >
+            </div>
+
+            <!-- Reason Type -->
+            <div>
+                <label for="reason_type" class="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Notificación *
+                </label>
+                <select 
+                    id="reason_type" 
+                    name="justification_type"
+                    required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                >
+                    <option value="">Selecciona una opción</option>
+                    <option value="absence">🏠 Ausencia (Todo el día)</option>
+                    <option value="tardiness"> Llegada tarde</option>
+                    <option value="early_dismissal"> Salida anticipada</option>
+                </select>
+            </div>
+
+            <!-- Reason Details -->
+            <div>
+                <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">
+                    Motivo *
+                </label>
+                <select 
+                    id="reason" 
+                    name="reason"
+                    required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                >
+                    <option value="">Selecciona un motivo</option>
+                    <option value="Enfermedad">🤒 Enfermedad</option>
+                    <option value="Cita médica">🏥 Cita médica</option>
+                    <option value="Emergencia familiar"> Emergencia familiar</option>
+                    <option value="Viaje familiar">✈️ Viaje familiar</option>
+                    <option value="Problemas de transporte">🚗 Problemas de transporte</option>
+                    <option value="Otro"> Otro motivo</option>
+                </select>
+            </div>
+
+            <!-- Additional Notes -->
+            <div>
+                <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                    Información Adicional (Opcional)
+                </label>
+                <textarea 
+                    id="notes" 
+                    name="notes"
+                    rows="3"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                    placeholder="Detalles adicionales sobre la ausencia o retraso..."
+                ></textarea>
+            </div>
+
+            <!-- Messages -->
+            <div id="errorMessage" class="hidden p-4 rounded-lg">
+                <span id="errorText"></span>
+            </div>
+
+            <div id="successMessage" class="hidden bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-green-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="successText"></span>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button 
+                    type="button"
+                    onclick="window.location.href='login.html'"
+                    class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg"
+                >
+                    ← Volver
+                </button>
+                <button 
+                    type="submit" 
+                    id="submitBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition shadow-lg hover:shadow-xl"
+                >
+                    Enviar Notificación
+                </button>
+            </div>
+        </form>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>&copy; 2025 ArrivApp. Sistema de Asistencia Escolar</p>
+        </div>
+    </div>
+
+    <script src="parent_justification.js"></script>
+</body>
+</html>

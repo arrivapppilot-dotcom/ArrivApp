@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArrivApp - Panel de Administración</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center space-x-3">
+                <svg class="w-10 h-10 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Panel de Administración</h1>
+                    <p class="text-gray-500">Configuración del Sistema</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="adminName" class="text-sm text-gray-600"></span>
+                <button onclick="window.location.href='dashboard.html'" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                    ← Volver al Dashboard
+                </button>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div id="messageContainer" class="hidden mb-6"></div>
+
+        <!-- Settings Tabs -->
+        <div class="bg-white rounded-xl shadow-md mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <button class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-blue-500 text-blue-600" data-tab="attendance">
+                         Asistencia
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="email">
+                         Email
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="security">
+                         Seguridad
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Attendance Settings Tab -->
+            <div id="tab-attendance" class="tab-content p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Configuración de Asistencia</h2>
+                
+                <!-- Late Threshold -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4"> Umbral de Retraso</h3>
+                    <p class="text-sm text-gray-600 mb-4">Define la hora después de la cual los estudiantes se consideran tarde</p>
+                    <div class="flex items-center space-x-4">
+                        <input type="time" id="lateThreshold" value="09:01" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-lg">
+                        <button onclick="saveLateThreshold()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                            Guardar
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Formato: HH:MM (24 horas)</p>
+                </div>
+
+                <!-- Absent Check Time -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4"> Hora de Verificación de Ausencias</h3>
+                    <p class="text-sm text-gray-600 mb-4">Define la hora a la que se envían notificaciones de ausencia a los padres</p>
+                    <div class="flex items-center space-x-4">
+                        <input type="time" id="absentCheckTime" value="09:10" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-lg">
+                        <button onclick="saveAbsentCheckTime()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                            Guardar
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Los emails se enviarán automáticamente a esta hora cada día</p>
+                </div>
+
+                <!-- Early Dismissal Time -->
+                <div class="p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4"> Hora de Salida Anticipada</h3>
+                    <p class="text-sm text-gray-600 mb-4">Define la hora antes de la cual las salidas se consideran anticipadas</p>
+                    <div class="flex items-center space-x-4">
+                        <input type="time" id="earlyDismissalTime" value="14:00" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-lg">
+                        <button onclick="saveEarlyDismissalTime()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                            Guardar
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Las salidas antes de esta hora generarán alertas especiales</p>
+                </div>
+            </div>
+
+            <!-- Email Settings Tab -->
+            <div id="tab-email" class="tab-content p-8 hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Configuración de Email</h2>
+
+                <!-- Absence Email Template -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4"> Plantilla de Email - Ausencia</h3>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Asunto</label>
+                        <input type="text" id="absentEmailSubject" value=" {student_name} ausente hoy - {date}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cuerpo del mensaje</label>
+                        <textarea id="absentEmailBody" rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm">Estimado/a padre/madre de {student_name},
+
+Le informamos que su hijo/a NO ha llegado al colegio hoy {date}.
+
+Si conoce el motivo de la ausencia, por favor contacte con el colegio.
+
+Gracias,
+{school_name}</textarea>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg mb-4">
+                        <p class="text-xs text-blue-800"><strong>Variables disponibles:</strong> {student_name}, {date}, {school_name}, {parent_name}</p>
+                    </div>
+                    <button onclick="saveEmailTemplate('absence')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        Guardar Plantilla
+                    </button>
+                </div>
+
+                <!-- Late Email Template -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4"> Plantilla de Email - Retraso</h3>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Asunto</label>
+                        <input type="text" id="lateEmailSubject" value=" {student_name} llegó tarde - {time}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cuerpo del mensaje</label>
+                        <textarea id="lateEmailBody" rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm">Estimado/a padre/madre de {student_name},
+
+Le informamos que su hijo/a llegó tarde al colegio hoy a las {time}.
+
+Hora de entrada: {time}
+
+Gracias,
+{school_name}</textarea>
+                    </div>
+                    <button onclick="saveEmailTemplate('late')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        Guardar Plantilla
+                    </button>
+                </div>
+
+                <!-- Early Dismissal Email Template -->
+                <div class="p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4"> Plantilla de Email - Salida Anticipada</h3>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Asunto</label>
+                        <input type="text" id="earlyEmailSubject" value=" ALERTA: {student_name} salió anticipadamente" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cuerpo del mensaje</label>
+                        <textarea id="earlyEmailBody" rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"> ALERTA DE SALIDA ANTICIPADA
+
+Estimado/a padre/madre de {student_name},
+
+Su hijo/a salió del colegio ANTES de la hora normal.
+
+Hora de salida: {time}
+Fecha: {date}
+
+Si usted autorizó esta salida, ignore este mensaje.
+Si NO autorizó esta salida, contacte inmediatamente con el colegio.
+
+Gracias,
+{school_name}</textarea>
+                    </div>
+                    <button onclick="saveEmailTemplate('early')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        Guardar Plantilla
+                    </button>
+                </div>
+            </div>
+
+            <!-- Security Settings Tab -->
+            <div id="tab-security" class="tab-content p-8 hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Configuración de Seguridad</h2>
+
+                <!-- Password Reset -->
+                <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4"> Restablecer Contraseña de Usuario</h3>
+                    <p class="text-sm text-gray-600 mb-4">Busca un usuario y restablece su contraseña</p>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar Usuario</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="searchUsername" placeholder="Nombre de usuario o email" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <button onclick="searchUser()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                                 Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="userSearchResults" class="hidden">
+                        <div class="bg-white p-4 rounded-lg border border-gray-300 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-semibold text-gray-800" id="foundUserName"></p>
+                                    <p class="text-sm text-gray-500" id="foundUserEmail"></p>
+                                    <p class="text-xs text-gray-400" id="foundUserRole"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nueva Contraseña</label>
+                            <input type="password" id="newPassword" placeholder="Ingrese nueva contraseña" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Confirmar Contraseña</label>
+                            <input type="password" id="confirmPassword" placeholder="Confirme la contraseña" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <button onclick="resetUserPassword()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                            🔄 Restablecer Contraseña
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Session Settings -->
+                <div class="p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">⏱️ Configuración de Sesiones</h3>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tiempo de expiración de sesión (minutos)</label>
+                        <input type="number" id="sessionTimeout" value="60" min="15" max="480" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-32">
+                    </div>
+                    <button onclick="saveSessionTimeout()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="admin_panel.js"></script>
+</body>
+</html>

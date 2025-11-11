@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+arrivapp.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Backup files
+*.bak
+*.backup
+*.broken
+*_old.*
+*_backup.*
+test_backups/
+
+# Node modules (if any)
+node_modules/
+package-lock.json
+
+# QR Codes (generated files)
+backend/qr_codes/*.png
+!backend/qr_codes/.gitkeep
+
+# Test files
+backend/test_*.py
+stress_test_data.py
+simulate_*.py
+populate_and_simulate.py
+
+# Docker
+docker-compose.override.yml

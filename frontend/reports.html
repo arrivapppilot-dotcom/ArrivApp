@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArrivApp - Reportes y Análisis</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .report-section { 
+            display: none;
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+        .report-section.active { display: block; }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        /* Fix button backgrounds */
+        .bg-gray-700 { background-color: #374151 !important; }
+        .bg-gray-800 { background-color: #1f2937 !important; }
+        .bg-rose-600 { background-color: #e11d48 !important; }
+        .bg-rose-700 { background-color: #be123c !important; }
+    </style>
+</head>
+<body class="min-h-screen">
+    
+    <!-- Header -->
+    <div class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">ArrivApp</h1>
+                        <p class="text-sm text-gray-600">Reportes y Análisis</p>
+                    </div>
+                </div>
+                
+                <!-- User Info -->
+                <div class="flex items-center space-x-4">
+                    <span id="userInfo" class="text-sm text-gray-700 font-medium">Cargando...</span>
+                    <button onclick="window.location.href='dashboard.html'" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md">
+                        ← Volver al Dashboard
+                    </button>
+                    <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        
+        <!-- Page Title -->
+        <div class="mb-12">
+            <h2 class="text-4xl font-bold text-white flex items-center space-x-3">
+                <span></span>
+                <span>Reportes y Análisis</span>
+            </h2>
+            <p class="mt-3 text-base text-purple-100">Análisis detallado de asistencia y tendencias</p>
+        </div>
+        
+        <!-- Filters Section -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Filtros</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Report Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Reporte</label>
+                    <select id="reportType" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="statistics">Estadísticas</option>
+                        <option value="history">Historial</option>
+                        <option value="tardiness">Análisis de Tardanzas</option>
+                        <option value="analytics">Análisis Histórico y Tendencias</option>
+                    </select>
+                </div>
+
+                <!-- Start Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
+                    <input type="date" id="startDate" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+
+                <!-- End Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
+                    <input type="date" id="endDate" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+
+                <!-- School Filter (Admin only) -->
+                <div id="schoolFilterContainer" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Colegio</label>
+                    <select id="schoolFilter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Todos los Colegios</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-4 flex space-x-3">
+                <button onclick="generateReport()" class="text-white px-6 py-2 rounded-lg font-semibold flex items-center" style="background-color: #6366f1;">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Generar Reporte
+                </button>
+                <button onclick="exportPDF()" class="text-white px-6 py-2 rounded-lg font-semibold flex items-center" style="background-color: #dc2626;">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Exportar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="hidden text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="mt-2 text-gray-600">Generando reporte...</p>
+        </div>
+
+        <!-- Statistics Report Section -->
+        <div id="statisticsSection" class="report-section">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
+                    <p class="text-blue-100 text-sm mb-1">Total Estudiantes</p>
+                    <p id="totalStudents" class="text-3xl font-bold">-</p>
+                </div>
+                <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
+                    <p class="text-green-100 text-sm mb-1">Registros de Asistencia</p>
+                    <p id="totalAttendance" class="text-3xl font-bold">-</p>
+                </div>
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
+                    <p class="text-purple-100 text-sm mb-1">Tasa de Asistencia</p>
+                    <p id="attendanceRate" class="text-3xl font-bold">-</p>
+                </div>
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
+                    <p class="text-orange-100 text-sm mb-1">Tasa de Tardanzas</p>
+                    <p id="lateRate" class="text-3xl font-bold">-</p>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Tendencia Diaria</h3>
+                    <div class="chart-container">
+                        <canvas id="dailyTrendChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Distribución de Asistencia</h3>
+                    <div class="chart-container">
+                        <canvas id="attendanceDistChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Breakdown Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">Desglose Diario</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Asistencia</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Llegadas Tardías</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">% Tardanzas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyBreakdownTable" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="4" class="px-6 py-4 text-center text-gray-500">No hay datos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Report Section -->
+        <div id="historySection" class="report-section">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">Historial de Asistencia</h3>
+                    <p class="text-sm text-gray-600 mt-1">Total: <span id="historyTotal">0</span> registros</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estudiante</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Colegio</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check-in</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check-out</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-gray-500">No hay datos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tardiness Analysis Section -->
+        <div id="tardinessSection" class="report-section">
+            <!-- Top Tardy Students -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">Estudiantes con Más Tardanzas</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estudiante</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Asistencias</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Llegadas Tardías</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">% Tardanzas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tardyStudentsTable" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay datos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Weekly Trends -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Tendencias Semanales</h3>
+                <div class="chart-container">
+                    <canvas id="weeklyTrendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Analytics Section -->
+        <div id="analyticsSection" class="report-section">
+            <!-- Summary Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg">
+                    <p class="text-indigo-100 text-sm mb-1">Promedio Asistencia Mensual</p>
+                    <p id="avgMonthlyAttendance" class="text-3xl font-bold">-</p>
+                </div>
+                <div class="bg-gradient-to-br from-rose-500 to-rose-600 text-white p-6 rounded-xl shadow-lg">
+                    <p class="text-rose-100 text-sm mb-1">Estudiantes con Ausentismo Crónico</p>
+                    <p id="chronicAbsenteeCount" class="text-3xl font-bold">-</p>
+                </div>
+                <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-6 rounded-xl shadow-lg">
+                    <p class="text-cyan-100 text-sm mb-1">Tendencia General</p>
+                    <p id="overallTrend" class="text-3xl font-bold">-</p>
+                </div>
+                <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6 rounded-xl shadow-lg">
+                    <p class="text-amber-100 text-sm mb-1">Tasa Mejora Puntualidad</p>
+                    <p id="punctualityTrend" class="text-3xl font-bold">-</p>
+                </div>
+            </div>
+
+            <!-- Long-term Trend Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4"> Tendencias de Asistencia (Últimos 3 Meses)</h3>
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="longTermTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Comparison -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4"> Comparación Mensual</h3>
+                <div class="chart-container" style="height: 350px;">
+                    <canvas id="monthlyComparisonChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chronic Absenteeism Analysis -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">🚨 Estudiantes con Ausentismo Crónico</h3>
+                    <p class="text-sm text-gray-600 mt-1">Estudiantes con menos de 80% de asistencia en el período</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estudiante</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Colegio</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Días Esperados</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Días Asistidos</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">% Asistencia</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Riesgo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="chronicAbsenteesTable" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-gray-500">No hay datos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Weekly Pattern Analysis -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4"> Patrones por Día de la Semana</h3>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="weekdayPatternChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Student Improvement Tracking -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800"> Estudiantes con Mayor Mejora</h3>
+                    <p class="text-sm text-gray-600 mt-1">Estudiantes que han mejorado su asistencia comparando primer mes vs último mes</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estudiante</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Primer Mes</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Último Mes</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mejora</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="improvementTable" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay datos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="reports.js"></script>
+</body>
+</html>

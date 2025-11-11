@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArrivApp - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      body { 
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .spinner { border-top-color: #3b82f6; animation: spin 1s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .new-row { animation: fadeIn 0.5s ease-out; }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        display: none;
+        -webkit-appearance: none;
+      }
+      .date-btn-active {
+        background-color: #3b82f6 !important;
+        color: white !important;
+      }
+      /* Fix button backgrounds in header */
+      .bg-purple-600 { background-color: #9333ea !important; }
+      .bg-purple-700 { background-color: #7e22ce !important; }
+      .bg-emerald-600 { background-color: #059669 !important; }
+      .bg-emerald-700 { background-color: #047857 !important; }
+      .bg-slate-600 { background-color: #475569 !important; }
+      .bg-slate-700 { background-color: #334155 !important; }
+      .bg-indigo-600 { background-color: #4f46e5 !important; }
+      .bg-indigo-700 { background-color: #4338ca !important; }
+      .bg-rose-600 { background-color: #e11d48 !important; }
+      .bg-rose-700 { background-color: #be123c !important; }
+      .bg-gray-700 { background-color: #374151 !important; }
+      .bg-gray-800 { background-color: #1f2937 !important; }
+    </style>
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="min-h-screen text-gray-800">
+
+    <!-- Header -->
+    <div class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">ArrivApp</h1>
+                        <p class="text-sm text-gray-600">Dashboard de Asistencia</p>
+                    </div>
+                </div>
+                
+                <!-- Navigation & User Info -->
+                <div class="flex items-center space-x-4">
+                    <div class="text-right mr-2">
+                        <p class="text-sm text-gray-700">Bienvenido/a, <span id="userName" class="font-semibold"></span></p>
+                        <p id="currentTime" class="text-sm text-gray-600"></p>
+                    </div>
+                    <button type="button" id="reportsBtn" onclick="window.location.href='reports.html'" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md">
+                         Reportes
+                    </button>
+                    <button onclick="window.location.href='students.html'" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md">
+                        Alumnos
+                    </button>
+                    <button id="manageUsersBtn" onclick="window.location.href='users.html'" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md hidden">
+                         Usuarios
+                    </button>
+                    <button id="manageSchoolsBtn" onclick="window.location.href='schools.html'" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md hidden">
+                        Colegios
+                    </button>
+                    <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow-md">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+      <!-- Controls Bar -->
+      <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 p-4 bg-white rounded-xl shadow-md items-end">
+          <div>
+              <label for="date-picker" class="block text-sm font-medium text-gray-700 mb-1">Seleccionar Fecha</label>
+              <div class="flex items-center space-x-2">
+                <input type="date" id="date-picker" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                <button id="btn-today" class="px-4 py-2 text-gray-700 rounded-md font-semibold text-sm transition border-2 border-gray-400" style="background-color: #f3f4f6;">Hoy</button>
+                <button id="btn-yesterday" class="px-4 py-2 text-gray-700 rounded-md font-semibold text-sm transition border-2 border-gray-400" style="background-color: #f3f4f6;">Ayer</button>
+              </div>
+          </div>
+          <div id="school-filter-container" class="hidden">
+              <label for="school-filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Colegio</label>
+              <select id="school-filter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                <option value="">Todos los colegios</option>
+              </select>
+          </div>
+          <div>
+              <label for="class-filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Clase</label>
+              <select id="class-filter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                <option value="">Todas las clases</option>
+              </select>
+          </div>
+          <div class="relative">
+              <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Buscar Alumno</label>
+              <input type="search" id="search-input" placeholder="Escribe un nombre para filtrar..." class="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none top-7">
+                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                </svg>
+              </div>
+          </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Alumnos Presentes</h2>
+          <p id="total-present" class="text-4xl font-bold text-green-500">-</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Alumnos Ausentes</h2>
+          <p id="total-absent" class="text-4xl font-bold text-red-500">-</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Alumnos con Retraso</h2>
+          <p id="total-late" class="text-4xl font-bold text-orange-500">-</p>
+        </div>
+      </div>
+
+      <!-- Additional Insight Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Tasa de Asistencia</h2>
+          <p id="attendance-rate" class="text-4xl font-bold text-blue-500">-</p>
+          <p class="text-sm text-gray-500 mt-2">% de alumnos presentes</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Puntualidad</h2>
+          <p id="on-time-rate" class="text-4xl font-bold text-indigo-500">-</p>
+          <p class="text-sm text-gray-500 mt-2">% llegaron a tiempo</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Requieren Atención</h2>
+          <p id="attention-count" class="text-4xl font-bold text-amber-500">-</p>
+          <p class="text-sm text-gray-500 mt-2">ausentes sin justificar</p>
+        </div>
+      </div>
+
+      <!-- Behavior Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Total Alumnos</h2>
+          <p id="total-students" class="text-4xl font-bold text-purple-500">-</p>
+          <p class="text-sm text-gray-500 mt-2">registrados en el sistema</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Llegadas a Tiempo</h2>
+          <p id="on-time-count" class="text-4xl font-bold text-teal-500">-</p>
+          <p class="text-sm text-gray-500 mt-2">antes de las 9:01</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+          <h2 class="text-lg font-semibold text-gray-600 mb-2">Con Justificación</h2>
+          <p id="justified-count" class="text-4xl font-bold text-cyan-500">-</p>
+          <p class="text-sm text-gray-500 mt-2">ausencias pre-notificadas</p>
+        </div>
+      </div>
+
+      <!-- Justifications Widget -->
+      <div id="justificationsWidget" class="bg-amber-50 border-2 border-amber-200 p-6 rounded-xl shadow-md mb-8 hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-amber-800 flex items-center">
+            <span class="text-2xl mr-2"></span>
+            Ausencias Pre-notificadas
+          </h2>
+          <span id="justifications-count" class="text-2xl font-bold text-amber-600">0</span>
+        </div>
+        <div id="justifications-list" class="space-y-2">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Left Column: Check-in and Late -->
+        <div>
+          <!-- Check-in Log -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-xl font-semibold text-gray-700">Registro de Check-in</h3>
+                <button id="export-csv" class="text-white px-3 py-1 rounded-md text-sm font-semibold transition" style="background-color: #6366f1;">Exportar a CSV</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Hora Entrada</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Alumno</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Colegio</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Hora Salida</th>
+                  </tr>
+                </thead>
+                <tbody id="checkin-table" class="divide-y divide-gray-200">
+                  <tr><td colspan="3" class="text-center p-10 text-gray-500">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Late List -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <h3 class="text-xl font-semibold text-gray-700 p-4 border-b">Llegadas con Retraso (después de las 9:01)</h3>
+             <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Hora</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Alumno</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Colegio</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Email Enviado</th>
+                  </tr>
+                </thead>
+                <tbody id="late-table" class="divide-y divide-gray-200">
+                  <tr><td colspan="4" class="text-center p-10 text-gray-500">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Absent -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+          <h3 class="text-xl font-semibold text-gray-700 p-4 border-b">Alumnos No Registrados</h3>
+           <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Nombre del Alumno</th>
+                  <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Clase</th>
+                  <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Colegio</th>
+                  <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Email Enviado</th>
+                </tr>
+              </thead>
+              <tbody id="absent-table" class="divide-y divide-gray-200">
+                <tr><td colspan="4" class="text-center p-10 text-gray-500">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center mt-8 text-sm text-gray-400">
+        <p>&copy; 2025 ArrivApp v2.0</p>
+        <p id="lastUpdated" class="text-xs mt-1">Última actualización: ...</p>
+      </div>
+
+    </div>
+
+    <!-- Student Management Modal -->
+    <div id="studentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-xl bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-2xl font-bold text-gray-800">Gestionar Alumnos</h3>
+          <button id="closeModal" class="text-gray-400 hover:text-gray-600 text-3xl font-bold">&times;</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b mb-4">
+          <button id="tab-manual" class="tab-btn flex-1 py-2 px-4 text-center font-semibold border-b-2 border-blue-500 text-blue-500">
+            Añadir Manualmente
+          </button>
+          <button id="tab-excel" class="tab-btn flex-1 py-2 px-4 text-center font-semibold text-gray-500 hover:text-gray-700">
+            Subir Excel
+          </button>
+          <button id="tab-list" class="tab-btn flex-1 py-2 px-4 text-center font-semibold text-gray-500 hover:text-gray-700">
+            Lista de Alumnos
+          </button>
+        </div>
+
+        <!-- Manual Entry Tab -->
+        <div id="content-manual" class="tab-content">
+          <form id="addStudentForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">ID del Alumno *</label>
+              <input type="text" id="student_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ej: 001, S001">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+              <input type="text" id="student_name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ej: Juan Pérez">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Clase *</label>
+              <input type="text" id="class_name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ej: 5A, 3B">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email del Padre/Tutor *</label>
+              <input type="email" id="parent_email" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ej: padre@email.com">
+            </div>
+            <div id="schoolSelectContainer" class="hidden">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Colegio *</label>
+              <select id="student_school_id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Selecciona un colegio</option>
+              </select>
+            </div>
+            <div class="flex space-x-3 pt-2">
+              <button type="submit" class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-600 transition">
+                 Añadir Alumno
+              </button>
+              <button type="button" id="clearForm" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-md font-semibold hover:bg-gray-400 transition">
+                Limpiar
+              </button>
+            </div>
+          </form>
+          <div id="addStudentMessage" class="mt-4 hidden"></div>
+        </div>
+
+        <!-- Excel Upload Tab -->
+        <div id="content-excel" class="tab-content hidden">
+          <div class="space-y-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 class="font-semibold text-blue-800 mb-2"> Formato del Excel:</h4>
+              <p class="text-sm text-blue-700 mb-2">El archivo debe tener las siguientes columnas (en este orden):</p>
+              <ul class="text-sm text-blue-700 list-disc list-inside space-y-1">
+                <li><strong>student_id</strong> - ID único del alumno</li>
+                <li><strong>name</strong> - Nombre completo</li>
+                <li><strong>class_name</strong> - Clase (ej: 5A)</li>
+                <li><strong>parent_email</strong> - Email del padre/tutor</li>
+              </ul>
+              <a href="#" id="downloadTemplate" class="inline-block mt-3 text-blue-600 underline hover:text-blue-800 font-semibold">
+                📥 Descargar plantilla Excel
+              </a>
+            </div>
+            
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden">
+              <label for="excelFile" class="cursor-pointer">
+                <div class="space-y-2">
+                  <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <p class="text-gray-600">
+                    <span class="text-blue-500 font-semibold">Selecciona un archivo</span> o arrastra aquí
+                  </p>
+                  <p class="text-xs text-gray-500">Excel (.xlsx, .xls)</p>
+                </div>
+              </label>
+            </div>
+            
+            <div id="excelFileName" class="text-sm text-gray-600 hidden"></div>
+            
+            <button id="uploadExcel" class="w-full bg-green-500 text-white py-3 px-4 rounded-md font-semibold hover:bg-green-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
+              📤 Subir y Procesar Excel
+            </button>
+            
+            <div id="uploadMessage" class="mt-4 hidden"></div>
+            <div id="uploadProgress" class="mt-4 hidden">
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="progressBar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+              <p id="progressText" class="text-sm text-gray-600 mt-1 text-center"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student List Tab -->
+        <div id="content-list" class="tab-content hidden">
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-gray-600">Total: <span id="totalStudents" class="font-bold">0</span> alumnos</p>
+              <button id="refreshList" class="text-blue-500 hover:text-blue-700 font-semibold text-sm">
+                🔄 Actualizar
+              </button>
+            </div>
+            
+            <div class="max-h-96 overflow-y-auto border rounded-lg">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700">ID</th>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700">Nombre</th>
+                    <th class="px-4 py-2 text-left font-semibold text-gray-700">Clase</th>
+                    <th class="px-4 py-2 text-center font-semibold text-gray-700">QR</th>
+                    <th class="px-4 py-2 text-center font-semibold text-gray-700">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="studentListTable" class="divide-y divide-gray-200">
+                  <tr><td colspan="5" class="text-center py-4 text-gray-500">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Student Profile Modal -->
+    <div id="studentProfileModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h3>Perfil del Alumno</h3>
+        <div id="studentProfileContent">
+          <!-- Student details will be loaded here -->
+        </div>
+        <div class="modal-buttons">
+          <button onclick="closeStudentProfile()" class="btn-primary" style="background-color: #6366f1; color: white; padding: 8px 20px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer;">Cerrar</button>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+  </body>
+</html>

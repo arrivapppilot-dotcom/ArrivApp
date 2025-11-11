@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArrivApp - Gestión de Alumnos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        tr:hover {
+            background-color: #f9fafb;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .status-inactive {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6"/>
+                    </svg>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">ArrivApp</h1>
+                        <p class="text-sm text-gray-600">Gestión de Alumnos</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="userInfo" class="text-sm text-gray-700 font-medium">Cargando...</span>
+                    <button onclick="window.location.href='dashboard.html'" style="background-color: #7c3aed !important; color: white !important;" class="hover:bg-purple-700 px-4 py-2 rounded-lg font-semibold transition shadow-lg">
+                        ← Dashboard
+                    </button>
+                    <button onclick="logout()" style="background-color: #dc2626 !important; color: white !important;" class="hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition shadow-lg">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Title -->
+        <div class="mb-6">
+            <h2 class="text-3xl font-bold text-white mb-2">Gestión de Alumnos</h2>
+            <p class="text-purple-100">Administra todos los estudiantes registrados en el sistema</p>
+        </div>
+
+        <!-- Actions and Filters Bar -->
+        <div class="bg-white rounded-xl shadow-xl p-6 mb-6 border-2 border-gray-100">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="openAddStudentModal()" style="background-color: #059669 !important; color: white !important;" class="hover:bg-emerald-700 px-6 py-3 rounded-lg font-semibold transition flex items-center shadow-lg hover:shadow-xl">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Añadir Alumno
+                    </button>
+                    <button onclick="openBulkUploadModal()" style="background-color: #4f46e5 !important; color: white !important;" class="hover:bg-indigo-700 px-6 py-3 rounded-lg font-semibold transition flex items-center shadow-lg hover:shadow-xl">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Carga Masiva
+                    </button>
+                    <button onclick="exportStudents()" style="background-color: #7c3aed !important; color: white !important;" class="hover:bg-violet-700 px-6 py-3 rounded-lg font-semibold transition flex items-center shadow-lg hover:shadow-xl">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Exportar CSV
+                    </button>
+                </div>
+                
+                <div class="bg-gradient-to-r from-purple-100 to-indigo-100 px-6 py-3 rounded-lg border-2 border-purple-200">
+                    <span class="font-bold text-3xl text-purple-900" id="totalCount">0</span>
+                    <span class="text-sm ml-2 text-purple-700 font-medium">estudiantes</span>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="text" id="searchInput" placeholder="Buscar por nombre, ID o email..." 
+                    class="px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium">
+                
+                <select id="schoolFilter" class="px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium">
+                    <option value="">Todos los colegios</option>
+                </select>
+                
+                <select id="classFilter" class="px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium">
+                    <option value="">Todas las clases</option>
+                </select>
+                
+                <select id="statusFilter" class="px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium">
+                    <option value="">Todos los estados</option>
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden border-2 border-gray-100">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gradient-to-r from-indigo-600 to-violet-600">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Alumno</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">ID Estudiante</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Colegio</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Clase</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Contacto</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Estado</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="w-16 h-16 text-gray-300 mb-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    <p class="text-gray-500 text-lg font-medium">Cargando estudiantes...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Detail Modal -->
+    <div id="studentDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-6">
+                    <h3 class="text-2xl font-bold text-gray-900">Detalles del Alumno</h3>
+                    <button onclick="closeStudentDetailModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="studentDetailContent"></div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="downloadQRCode()" style="background-color: #059669 !important; color: white !important;" class="hover:bg-emerald-700 px-6 py-3 rounded-lg font-semibold transition flex items-center justify-center shadow-lg hover:shadow-xl">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Descargar QR
+                    </button>
+                    <button onclick="editStudent()" style="background-color: #4f46e5 !important; color: white !important;" class="hover:bg-indigo-700 px-6 py-3 rounded-lg font-semibold transition flex-1 shadow-lg hover:shadow-xl">
+                        Editar
+                    </button>
+                    <button onclick="closeStudentDetailModal()" style="background-color: #6b7280 !important; color: white !important;" class="hover:bg-gray-600 px-6 py-3 rounded-lg font-semibold transition shadow-lg hover:shadow-xl">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Student Modal -->
+    <div id="addStudentModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-6">
+                    <h3 id="addStudentTitle" class="text-2xl font-bold text-gray-900">Añadir Alumno</h3>
+                    <button onclick="closeAddStudentModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <form id="studentForm" class="space-y-4">
+                    <input type="hidden" id="studentId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                        <input type="text" id="studentName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ID del Estudiante *</label>
+                        <input type="text" id="studentStudentId" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="studentEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                        <input type="tel" id="studentPhone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Clase *</label>
+                        <input type="text" id="studentClass" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Colegio *</label>
+                        <select id="studentSchool" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="studentActive" checked class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                        <label for="studentActive" class="ml-2 text-sm font-medium text-gray-700">Alumno activo</label>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" style="background-color: #4f46e5 !important; color: white !important;" class="hover:bg-indigo-700 px-6 py-3 rounded-lg font-semibold transition flex-1 shadow-lg hover:shadow-xl">
+                            Guardar
+                        </button>
+                        <button type="button" onclick="closeAddStudentModal()" style="background-color: #6b7280 !important; color: white !important;" class="hover:bg-gray-600 px-6 py-3 rounded-lg font-semibold transition shadow-lg hover:shadow-xl">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div id="bulkUploadModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-6">
+                    <h3 class="text-2xl font-bold text-gray-900">Carga Masiva de Alumnos</h3>
+                    <button onclick="closeBulkUploadModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="mb-6">
+                    <p class="text-sm text-gray-600 mb-4">Sube un archivo Excel (.xlsx) con las siguientes columnas:</p>
+                    <ul class="text-sm text-gray-600 list-disc list-inside space-y-1">
+                        <li><strong>nombre</strong> - Nombre completo del alumno</li>
+                        <li><strong>student_id</strong> - ID único del estudiante</li>
+                        <li><strong>email</strong> - Correo electrónico (opcional)</li>
+                        <li><strong>telefono</strong> - Teléfono de contacto (opcional)</li>
+                        <li><strong>clase</strong> - Clase o grado</li>
+                        <li><strong>school_id</strong> - ID del colegio</li>
+                    </ul>
+                </div>
+                <input type="file" id="bulkFile" accept=".xlsx,.xls" class="w-full mb-4 border-2 border-gray-300 rounded-lg p-2">
+                <div id="uploadProgress" class="hidden mb-4">
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="uploadProgressBar" class="bg-indigo-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="uploadStatus" class="text-sm text-gray-600 mt-2 font-medium">Procesando...</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="uploadBulkFile()" style="background-color: #4f46e5 !important; color: white !important;" class="hover:bg-indigo-700 px-6 py-3 rounded-lg font-semibold transition flex-1 shadow-lg hover:shadow-xl">
+                        Subir Archivo
+                    </button>
+                    <button onclick="closeBulkUploadModal()" style="background-color: #6b7280 !important; color: white !important;" class="hover:bg-gray-600 px-6 py-3 rounded-lg font-semibold transition shadow-lg hover:shadow-xl">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="students.js"></script>
+</body>
+</html>

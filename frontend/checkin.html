@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArrivApp - Check-in Station</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-500 to-purple-600 min-h-screen flex items-center justify-center p-4">
+    
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
+                <svg class="w-12 h-12 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">ArrivApp</h1>
+            <p class="text-xl text-gray-600">Estación de Check-in</p>
+        </div>
+
+        <!-- QR Scanner -->
+        <div id="scannerSection" class="mb-8">
+            <div class="bg-gray-50 rounded-2xl p-6 mb-4">
+                <div id="reader" class="rounded-xl overflow-hidden"></div>
+            </div>
+            <div class="text-center">
+                <p class="text-gray-600 text-lg pulse-animation">
+                    👆 Escanea tu código QR para registrar tu entrada
+                </p>
+            </div>
+        </div>
+
+        <!-- Manual Input (fallback) -->
+        <div class="mb-6">
+            <div class="text-center text-sm text-gray-500 mb-3">
+                <span>¿Problemas con el escáner?</span>
+            </div>
+            <form id="manualForm" class="flex gap-2">
+                <input 
+                    type="text" 
+                    id="manualInput" 
+                    placeholder="Ingresa tu ID de estudiante"
+                    class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                <button 
+                    type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition"
+                >
+                    Check-in
+                </button>
+            </form>
+        </div>
+
+        <!-- Status Message -->
+        <div id="statusMessage" class="hidden rounded-xl p-6 text-center mb-6">
+            <div id="statusIcon" class="text-6xl mb-4"></div>
+            <h2 id="statusTitle" class="text-3xl font-bold mb-2"></h2>
+            <p id="statusText" class="text-xl text-gray-600"></p>
+        </div>
+
+        <!-- Time Display -->
+        <div class="text-center text-gray-500 text-sm">
+            <p id="currentTime" class="text-2xl font-bold text-gray-700 mb-1"></p>
+            <p>&copy; 2025 ArrivApp</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-detect if running on Cloudflare or localhost
+        const API_BASE_URL = window.location.hostname.includes('trycloudflare.com') 
+            ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
+            : 'http://localhost:8000';
+        let html5QrCode;
+        let isProcessing = false;
+
+        // Initialize QR Scanner
+        function initScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+            
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onScanSuccess,
+                onScanError
+            ).catch(err => {
+                console.error("Error starting scanner:", err);
+                showStatus('error', '', 'Error', 'No se pudo acceder a la cámara');
+            });
+        }
+
+        // QR Scan Success
+        async function onScanSuccess(decodedText, decodedResult) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            // Stop scanner temporarily
+            html5QrCode.pause();
+
+            // Extract student_id from URL or use directly
+            let studentId = decodedText;
+            if (decodedText.includes('student_id=')) {
+                const urlParams = new URLSearchParams(decodedText.split('?')[1]);
+                studentId = urlParams.get('student_id');
+            }
+
+            await processCheckin(studentId);
+        }
+
+        // QR Scan Error (ignore)
+        function onScanError(errorMessage) {
+            // Ignore scanning errors (too frequent)
+        }
+
+        // Process Check-in/Check-out
+        async function processCheckin(studentId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/checkin/scan?student_id=${studentId}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // ERROR: Duplicate scan (within 10 minutes)
+                    if (data.error === 'duplicate_scan') {
+                        showStatus('warning', '', '¡Escaneo Duplicado!', 
+                            `${data.student_name} ya registró entrada hace ${data.minutes_ago} minutos\n\nSi deseas registrar salida, espera ${10 - data.minutes_ago} minutos más`);
+                    }
+                    // ERROR: Too early for checkout (less than 30 min)
+                    else if (data.error === 'too_early_checkout') {
+                        showStatus('warning', '⏱️', 'Salida Muy Temprana', 
+                            `${data.student_name}, debes permanecer al menos 30 minutos en el colegio\n\nTiempo en el colegio: ${data.minutes_since_checkin} min\nEspera ${data.minutes_remaining} minutos más`);
+                    }
+                    // ERROR: Already completed (both check-in and check-out)
+                    else if (data.error === 'already_completed' || data.already_completed) {
+                        const checkinTime = new Date(data.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                        const checkoutTime = new Date(data.checkout_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                        showStatus('info', '', 'Ya Completado', 
+                            `${data.student_name} ya registró entrada y salida hoy\n\nEntrada: ${checkinTime}h\nSalida: ${checkoutTime}h`);
+                    }
+                    // SUCCESS: Check-out action
+                    else if (data.action === 'checkout') {
+                        const checkinTime = new Date(data.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                        const checkoutTime = new Date(data.checkout_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                        const hours = Math.floor(data.duration_minutes / 60);
+                        const mins = data.duration_minutes % 60;
+                        showStatus('success', '👋', '¡Hasta Luego!', 
+                            `${data.student_name}\n\nEntrada: ${checkinTime}h\nSalida: ${checkoutTime}h\nTiempo: ${hours}h ${mins}min`);
+                    }
+                    // SUCCESS: Check-in action
+                    else if (data.action === 'checkin') {
+                        const icon = data.is_late ? '' : '';
+                        const title = data.is_late ? '¡Llegada con Retraso!' : '¡Bienvenido/a!';
+                        const checkinTime = new Date(data.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                        showStatus('success', icon, title, 
+                            `${data.student_name}\n${data.class}\n\n${checkinTime}h`);
+                    }
+                } else {
+                    showStatus('error', '', 'Error', data.detail || 'Estudiante no encontrado');
+                }
+            } catch (error) {
+                console.error('Check-in error:', error);
+                showStatus('error', '', 'Error', 'Error al procesar el registro');
+            }
+
+            // Resume scanner after appropriate delay (longer for warnings)
+            const delay = (data?.error === 'duplicate_scan' || data?.error === 'too_early_checkout') ? 5000 : 3000;
+            setTimeout(() => {
+                hideStatus();
+                if (html5QrCode) {
+                    html5QrCode.resume();
+                }
+                isProcessing = false;
+            }, delay);
+        }
+
+        // Show Status
+        function showStatus(type, icon, title, text) {
+            const statusMessage = document.getElementById('statusMessage');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusText = document.getElementById('statusText');
+
+            statusMessage.className = `rounded-xl p-6 text-center mb-6`;
+            
+            if (type === 'success') {
+                statusMessage.classList.add('bg-green-50', 'border-2', 'border-green-200');
+                statusTitle.className = 'text-3xl font-bold mb-2 text-green-700';
+            } else if (type === 'error') {
+                statusMessage.classList.add('bg-red-50', 'border-2', 'border-red-200');
+                statusTitle.className = 'text-3xl font-bold mb-2 text-red-700';
+            } else if (type === 'warning') {
+                statusMessage.classList.add('bg-yellow-50', 'border-2', 'border-yellow-300');
+                statusTitle.className = 'text-3xl font-bold mb-2 text-yellow-700';
+            } else if (type === 'info') {
+                statusMessage.classList.add('bg-blue-50', 'border-2', 'border-blue-200');
+                statusTitle.className = 'text-3xl font-bold mb-2 text-blue-700';
+            }
+
+            statusIcon.textContent = icon;
+            statusTitle.textContent = title;
+            statusText.textContent = text;
+            statusMessage.classList.remove('hidden');
+
+            // Hide scanner while showing status
+            document.getElementById('scannerSection').classList.add('hidden');
+        }
+
+        // Hide Status
+        function hideStatus() {
+            document.getElementById('statusMessage').classList.add('hidden');
+            document.getElementById('scannerSection').classList.remove('hidden');
+        }
+
+        // Manual Check-in
+        document.getElementById('manualForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const studentId = document.getElementById('manualInput').value.trim();
+            
+            if (!studentId) {
+                showStatus('error', '', 'Error', 'Por favor ingresa tu ID de estudiante');
+                setTimeout(hideStatus, 2000);
+                return;
+            }
+
+            await processCheckin(studentId);
+            document.getElementById('manualInput').value = '';
+        });
+
+        // Update Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = 
+                now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initScanner();
+            updateClock();
+            setInterval(updateClock, 1000);
+        });
+    </script>
+</body>
+</html>

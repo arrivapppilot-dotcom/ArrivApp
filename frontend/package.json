@@ -1,0 +1,12 @@
+{
+  "name": "arrivapp-frontend",
+  "version": "1.0.0",
+  "description": "ArrivApp Frontend - Student Check-in System",
+  "scripts": {
+    "build:css": "./tailwindcss -i ./src/input.css -o ./styles.css --minify",
+    "watch:css": "./tailwindcss -i ./src/input.css -o ./styles.css --watch",
+    "serve": "python3 -m http.server 8080"
+  },
+  "author": "",
+  "license": "ISC"
+}

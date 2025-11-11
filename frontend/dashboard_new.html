@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArrivApp - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+        }
+        
+        .sidebar-link {
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: #3b82f6;
+        }
+        
+        .sidebar-link.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-left-color: #3b82f6;
+            color: #3b82f6;
+        }
+        
+        /* Card Styles */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.12);
+        }
+        
+        .data-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+        
+        table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        table tbody tr {
+            transition: background-color 0.15s;
+        }
+        
+        table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+        
+        /* Badge Styles */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .badge-info {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .spinner {
+            border-top-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Mobile Menu Toggle */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn" class="md:hidden fixed top-4 left-4 z-50 bg-white p-3 rounded-lg shadow-lg">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed left-0 top-0 h-full w-64 z-40">
+        <div class="p-6">
+            <!-- Logo -->
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-white text-xl font-bold">ArrivApp</h1>
+                    <p class="text-gray-400 text-xs">Sistema de Asistencia</p>
+                </div>
+            </div>
+            
+            <!-- User Info -->
+            <div class="bg-gray-800 bg-opacity-50 rounded-xl p-4 mb-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                        <span id="userInitials">A</span>
+                    </div>
+                    <div class="flex-1">
+                        <p id="userName" class="text-white text-sm font-semibold">Admin</p>
+                        <p id="userRole" class="text-gray-400 text-xs">Administrador</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="space-y-1">
+                <a href="dashboard.html" class="sidebar-link active flex items-center space-x-3 px-4 py-3 text-white rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                
+                <a href="students.html" class="sidebar-link flex items-center space-x-3 px-4 py-3 text-gray-300 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <span class="font-medium">Alumnos</span>
+                </a>
+                
+                <a href="schools.html" id="navSchools" class="sidebar-link flex items-center space-x-3 px-4 py-3 text-gray-300 rounded-lg hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    <span class="font-medium">Colegios</span>
+                </a>
+                
+                <a href="users.html" id="navUsers" class="sidebar-link flex items-center space-x-3 px-4 py-3 text-gray-300 rounded-lg hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <span class="font-medium">Usuarios</span>
+                </a>
+                
+                <a href="checkin.html" class="sidebar-link flex items-center space-x-3 px-4 py-3 text-gray-300 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                    </svg>
+                    <span class="font-medium">Estación QR</span>
+                </a>
+            </nav>
+            
+            <!-- Logout Button -->
+            <div class="absolute bottom-6 left-6 right-6">
+                <button id="logoutBtn" class="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="md:ml-64 min-h-screen p-6">
+        <div class="max-w-7xl mx-auto">
+            
+            <!-- Header -->
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-white mb-2">Dashboard</h2>
+                <div class="flex items-center space-x-4 text-white text-opacity-90">
+                    <span id="currentDate" class="text-sm"></span>
+                    <span>•</span>
+                    <span id="currentTime" class="text-sm"></span>
+                </div>
+            </div>
+            
+            <!-- Date Controls -->
+            <div class="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-6 mb-6 shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <label class="text-sm font-semibold text-gray-700">Fecha:</label>
+                        <input type="date" id="date-picker" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <button id="btn-today" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition">
+                            Hoy
+                        </button>
+                        <button id="btn-yesterday" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition">
+                            Ayer
+                        </button>
+                    </div>
+                    <div class="flex-1 max-w-md">
+                        <input type="search" id="search-input" placeholder="Buscar alumno..." class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Check-ins -->
+                <div class="stat-card fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-500">HOY</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Registros</p>
+                        <p id="totalCheckins" class="text-3xl font-bold text-gray-900">0</p>
+                    </div>
+                </div>
+                
+                <!-- On Time -->
+                <div class="stat-card fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-semibold text-green-600">A TIEMPO</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Puntuales</p>
+                        <p id="onTimeCount" class="text-3xl font-bold text-green-600">0</p>
+                    </div>
+                </div>
+                
+                <!-- Late -->
+                <div class="stat-card fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-semibold text-yellow-600">RETRASO</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Con Retraso</p>
+                        <p id="lateCount" class="text-3xl font-bold text-yellow-600">0</p>
+                    </div>
+                </div>
+                
+                <!-- Absent -->
+                <div class="stat-card fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-semibold text-red-600">AUSENTES</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Sin Registrar</p>
+                        <p id="absentCount" class="text-3xl font-bold text-red-600">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Tables Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Recent Check-ins -->
+                <div class="data-card fade-in">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-bold text-gray-900">Registros Recientes</h3>
+                        <p class="text-sm text-gray-500 mt-1">Últimas entradas y salidas</p>
+                    </div>
+                    <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                        <table class="min-w-full">
+                            <thead class="sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Hora</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Alumno</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Salida</th>
+                                </tr>
+                            </thead>
+                            <tbody id="checkinTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Late Arrivals -->
+                <div class="data-card fade-in">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-bold text-gray-900">Llegadas con Retraso</h3>
+                        <p class="text-sm text-gray-500 mt-1">Estudiantes que llegaron tarde</p>
+                    </div>
+                    <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                        <table class="min-w-full">
+                            <thead class="sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Hora</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Alumno</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lateTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Absent Students -->
+                <div class="data-card fade-in lg:col-span-2">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-bold text-gray-900">Alumnos No Registrados</h3>
+                        <p class="text-sm text-gray-500 mt-1">Estudiantes sin registro de entrada</p>
+                    </div>
+                    <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                        <table class="min-w-full">
+                            <thead class="sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Nombre</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Clase</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Colegio</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Notificación</th>
+                                </tr>
+                            </thead>
+                            <tbody id="absentTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-2xl p-8 flex flex-col items-center">
+                    <div class="w-16 h-16 border-4 border-gray-200 border-t-blue-500 rounded-full spinner"></div>
+                    <p class="mt-4 text-gray-700 font-medium">Cargando datos...</p>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <!-- Student Profile Modal (reuse existing) -->
+    <div id="studentProfileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">Perfil del Alumno</h3>
+                <button onclick="closeStudentProfile()" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="studentProfileContent" class="space-y-4">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

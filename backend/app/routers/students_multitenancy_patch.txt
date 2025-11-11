@@ -1,0 +1,42 @@
+CHANGES NEEDED FOR MULTI-SCHOOL SUPPORT IN students.py:
+
+1. In get_students() function (line ~25):
+   ADD school filtering based on current user:
+   
+   if current_user.is_admin:
+       students = db.query(Student).filter(Student.is_active == True).offset(skip).limit(limit).all()
+   elif current_user.school_id:
+       students = db.query(Student).filter(
+           Student.is_active == True,
+           Student.school_id == current_user.school_id
+       ).offset(skip).limit(limit).all()
+   else:
+       students = []
+
+2. In get_student() function (line ~35):
+   ADD school access check:
+   
+   if not current_user.is_admin and student.school_id != current_user.school_id:
+       raise HTTPException(status_code=403, detail="Access denied to this student")
+
+3. In create_student() function (line ~50):
+   ADD school_id assignment:
+   
+   db_student = Student(
+       student_id=student_data.student_id,
+       name=student_data.name,
+       class_name=student_data.class_name,
+       parent_email=student_data.parent_email,
+       school_id=student_data.school_id  # ADD THIS LINE
+   )
+
+4. In upload_students_excel() function (line ~160):
+   ADD school_id to each student creation:
+   
+   db_student = Student(
+       student_id=student_id,
+       name=name,
+       class_name=class_name,
+       parent_email=parent_email,
+       school_id=current_admin.school_id if current_admin.school_id else 1  # ADD THIS
+   )
