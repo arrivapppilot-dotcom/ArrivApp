@@ -1,7 +1,7 @@
-// Auto-detect if running on Cloudflare or localhost
-const API_BASE_URL = window.location.hostname.includes('trycloudflare.com') 
-    ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
-    : 'http://localhost:8000';
+// Auto-detect environment and use appropriate API URL
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000'
+    : 'https://arrivapp.onrender.com';
 let users = [];
 let schools = [];
 let editingUserId = null;
