@@ -104,7 +104,7 @@ app = FastAPI(
 # CORS middleware - Allow all origins for testing
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for public testing
+    allow_origins=["https://arrivapp-frontend.onrender.com"],  # Only allow deployed frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
