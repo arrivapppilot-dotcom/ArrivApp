@@ -137,15 +137,18 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
-        // Auto-detect if running on Cloudflare or localhost
-        const API_BASE_URL = window.location.hostname.includes('trycloudflare.com') 
-            ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
-            : 'http://localhost:8000';
-
+        // Use shared config.js for API_BASE_URL
         // Check if already logged in
         if (localStorage.getItem('arrivapp_token')) {
             window.location.href = 'dashboard.html';
+        }
+
+        // Show visible error if API_BASE_URL is not defined
+        if (typeof API_BASE_URL === 'undefined') {
+            document.body.innerHTML = '<div style="color: red; font-size: 1.2em; text-align: center; margin-top: 40px;">Error: config.js not loaded. API_BASE_URL is undefined.<br>Check that config.js is present and deployed in your frontend.</div>';
+            throw new Error('API_BASE_URL is undefined. config.js not loaded.');
         }
 
         const loginForm = document.getElementById('loginForm');
@@ -163,6 +166,7 @@
         }
 
         loginForm.addEventListener('submit', async (e) => {
+            console.log('Login form submitted'); // Debug log
             e.preventDefault();
             hideError();
 
@@ -197,7 +201,7 @@
 
             } catch (error) {
                 showError(error.message || 'Error al iniciar sesión. Por favor, verifica tus credenciales.');
-                
+            } finally {
                 // Re-enable button
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Iniciar Sesión';
