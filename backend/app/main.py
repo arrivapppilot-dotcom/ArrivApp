@@ -17,10 +17,12 @@ Base.metadata.create_all(bind=engine)
 async def lifespan(app: FastAPI):
     """Handle startup and shutdown events."""
     # Startup
-    start_scheduler()
+    # Disabled scheduler for deployment without SMTP configuration
+    # start_scheduler()
     yield
     # Shutdown
-    stop_scheduler()
+    # stop_scheduler()
+    pass
 
 
 # API Metadata
