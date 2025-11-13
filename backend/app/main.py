@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+import os
+from pathlib import Path
 from app.core.config import get_settings
 from app.core.database import engine, Base
 from app.routers import auth, students, checkin, schools, users, reports, justifications
@@ -118,6 +120,10 @@ app.include_router(students.router)
 app.include_router(checkin.router)
 app.include_router(reports.router)
 app.include_router(justifications.router)
+
+# Create qr_codes directory if it doesn't exist
+qr_codes_dir = Path("qr_codes")
+qr_codes_dir.mkdir(exist_ok=True)
 
 # Mount static files for QR codes
 app.mount("/qr_codes", StaticFiles(directory="qr_codes"), name="qr_codes")
