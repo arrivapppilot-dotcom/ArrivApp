@@ -17,29 +17,41 @@ Base.metadata.create_all(bind=engine)
 
 def init_admin_user():
     """Create default admin user if it doesn't exist."""
-    from app.models.models import User, UserRole
-    from app.core.security import get_password_hash
-    
-    db = SessionLocal()
     try:
-        admin = db.query(User).filter(User.username == "admin").first()
-        if not admin:
-            admin = User(
-                username="admin",
-                email="admin@arrivapp.com",
-                hashed_password=get_password_hash("madrid123"),
-                full_name="Administrator",
-                role=UserRole.admin,
-                is_admin=True,
-                is_active=True
-            )
-            db.add(admin)
-            db.commit()
-            print("✅ Default admin user created (username: admin, password: madrid123)")
-        else:
-            print("✅ Admin user already exists")
-    finally:
-        db.close()
+        from app.models.models import User, UserRole
+        from app.core.security import get_password_hash
+        from sqlalchemy import text
+        
+        db = SessionLocal()
+        try:
+            # Check if admin exists using raw SQL to avoid any model issues
+            result = db.execute(text("SELECT COUNT(*) FROM users WHERE username = 'admin'")).scalar()
+            
+            if result == 0:
+                # Create new admin user
+                hashed_pw = get_password_hash("madrid123")
+                admin = User(
+                    username="admin",
+                    email="admin@arrivapp.com",
+                    hashed_password=hashed_pw,
+                    full_name="Administrator",
+                    role=UserRole.admin,
+                    is_admin=True,
+                    is_active=True
+                )
+                db.add(admin)
+                db.commit()
+                print("✅ Default admin user created (username: admin, password: madrid123)")
+            else:
+                print("✅ Admin user already exists")
+        except Exception as e:
+            print(f"⚠️ Error initializing admin user: {e}")
+            db.rollback()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"⚠️ Could not initialize admin user: {e}")
+        # Don't crash the app if admin creation fails
 
 
 @asynccontextmanager
