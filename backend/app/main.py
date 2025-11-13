@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import os
 from pathlib import Path
 from app.core.config import get_settings
-from app.core.database import engine, Base
+from app.core.database import engine, Base, SessionLocal
 from app.routers import auth, students, checkin, schools, users, reports, justifications
 from app.services.scheduler import start_scheduler, stop_scheduler
 
@@ -15,10 +15,38 @@ settings = get_settings()
 Base.metadata.create_all(bind=engine)
 
 
+def init_admin_user():
+    """Create default admin user if it doesn't exist."""
+    from app.models.models import User, UserRole
+    from app.core.security import get_password_hash
+    
+    db = SessionLocal()
+    try:
+        admin = db.query(User).filter(User.username == "admin").first()
+        if not admin:
+            admin = User(
+                username="admin",
+                email="admin@arrivapp.com",
+                hashed_password=get_password_hash("madrid123"),
+                full_name="Administrator",
+                role=UserRole.admin,
+                is_admin=True,
+                is_active=True
+            )
+            db.add(admin)
+            db.commit()
+            print("✅ Default admin user created (username: admin, password: madrid123)")
+        else:
+            print("✅ Admin user already exists")
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle startup and shutdown events."""
     # Startup
+    init_admin_user()
     # Disabled scheduler for deployment without SMTP configuration
     # start_scheduler()
     yield
