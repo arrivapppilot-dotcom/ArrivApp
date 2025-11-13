@@ -88,7 +88,7 @@
         // Auto-detect if running on Cloudflare or localhost
         const API_BASE_URL = window.location.hostname.includes('trycloudflare.com') 
             ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
-            : 'http://localhost:8000';
+            : 'http://localhost:8088';
         let html5QrCode;
         let isProcessing = false;
 
@@ -138,63 +138,56 @@
 
         // Process Check-in/Check-out
         async function processCheckin(studentId) {
+            let data;
+            let delay = 3000;
             try {
                 const response = await fetch(`${API_BASE_URL}/api/checkin/scan?student_id=${studentId}`, {
                     method: 'POST'
                 });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // ERROR: Duplicate scan (within 10 minutes)
-                    if (data.error === 'duplicate_scan') {
-                        showStatus('warning', '', '¡Escaneo Duplicado!', 
-                            `${data.student_name} ya registró entrada hace ${data.minutes_ago} minutos\n\nSi deseas registrar salida, espera ${10 - data.minutes_ago} minutos más`);
-                    }
-                    // ERROR: Too early for checkout (less than 30 min)
-                    else if (data.error === 'too_early_checkout') {
-                        showStatus('warning', '⏱️', 'Salida Muy Temprana', 
-                            `${data.student_name}, debes permanecer al menos 30 minutos en el colegio\n\nTiempo en el colegio: ${data.minutes_since_checkin} min\nEspera ${data.minutes_remaining} minutos más`);
-                    }
-                    // ERROR: Already completed (both check-in and check-out)
-                    else if (data.error === 'already_completed' || data.already_completed) {
-                        const checkinTime = new Date(data.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
-                        const checkoutTime = new Date(data.checkout_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
-                        showStatus('info', '', 'Ya Completado', 
-                            `${data.student_name} ya registró entrada y salida hoy\n\nEntrada: ${checkinTime}h\nSalida: ${checkoutTime}h`);
-                    }
-                    // SUCCESS: Check-out action
-                    else if (data.action === 'checkout') {
-                        const checkinTime = new Date(data.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
-                        const checkoutTime = new Date(data.checkout_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
-                        const hours = Math.floor(data.duration_minutes / 60);
-                        const mins = data.duration_minutes % 60;
-                        showStatus('success', '👋', '¡Hasta Luego!', 
-                            `${data.student_name}\n\nEntrada: ${checkinTime}h\nSalida: ${checkoutTime}h\nTiempo: ${hours}h ${mins}min`);
-                    }
-                    // SUCCESS: Check-in action
-                    else if (data.action === 'checkin') {
-                        const icon = data.is_late ? '' : '';
-                        const title = data.is_late ? '¡Llegada con Retraso!' : '¡Bienvenido/a!';
-                        const checkinTime = new Date(data.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
-                        showStatus('success', icon, title, 
-                            `${data.student_name}\n${data.class}\n\n${checkinTime}h`);
-                    }
-                } else {
-                    showStatus('error', '', 'Error', data.detail || 'Estudiante no encontrado');
+                if (!response.ok) {
+                    showStatus('error', '', 'Error', 'Estudiante no encontrado');
+                    setTimeout(() => {
+                        hideStatus();
+                        if (html5QrCode) html5QrCode.resume();
+                        isProcessing = false;
+                    }, delay);
+                    return;
+                }
+                data = await response.json();
+                if (data.error === 'duplicate_scan') {
+                    showStatus('warning', '', '¡Escaneo Duplicado!', 
+                        `${data.student_name} ya registró entrada hace ${data.minutes_ago} minutos\n\nSi deseas registrar salida, espera ${10 - data.minutes_ago} minutos más`);
+                    delay = 5000;
+                } else if (data.error === 'too_early_checkout') {
+                    showStatus('warning', '⏱️', 'Salida Muy Temprana', 
+                        `${data.student_name}, debes permanecer al menos 30 minutos en el colegio\n\nTiempo en el colegio: ${data.minutes_since_checkin} min\nEspera ${data.minutes_remaining} minutos más`);
+                    delay = 5000;
+                } else if (data.error === 'already_completed' || data.already_completed) {
+                    const checkinTime = new Date(data.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                    const checkoutTime = new Date(data.checkout_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                    showStatus('info', '', 'Ya Completado', 
+                        `${data.student_name} ya registró entrada y salida hoy\n\nEntrada: ${checkinTime}h\nSalida: ${checkoutTime}h`);
+                } else if (data.action === 'checkout') {
+                    const checkinTime = new Date(data.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                    const checkoutTime = new Date(data.checkout_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                    const hours = Math.floor(data.duration_minutes / 60);
+                    const mins = data.duration_minutes % 60;
+                    showStatus('success', '👋', '¡Hasta Luego!', 
+                        `${data.student_name}\n\nEntrada: ${checkinTime}h\nSalida: ${checkoutTime}h\nTiempo: ${hours}h ${mins}min`);
+                } else if (data.action === 'checkin') {
+                    const icon = data.is_late ? '' : '';
+                    const title = data.is_late ? '¡Llegada con Retraso!' : '¡Bienvenido/a!';
+                    const checkinTime = new Date(data.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+                    showStatus('success', icon, title, 
+                        `${data.student_name}\n${data.class}\n\n${checkinTime}h`);
                 }
             } catch (error) {
                 console.error('Check-in error:', error);
-                showStatus('error', '', 'Error', 'Error al procesar el registro');
+                showStatus('error', '', 'Error', 'No se pudo conectar al servidor.');
             }
-
-            // Resume scanner after appropriate delay (longer for warnings)
-            const delay = (data?.error === 'duplicate_scan' || data?.error === 'too_early_checkout') ? 5000 : 3000;
             setTimeout(() => {
                 hideStatus();
-                if (html5QrCode) {
-                    html5QrCode.resume();
-                }
+                if (html5QrCode) html5QrCode.resume();
                 isProcessing = false;
             }, delay);
         }

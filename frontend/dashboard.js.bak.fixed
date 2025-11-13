@@ -1,0 +1,101 @@
+// ...existing code...
+
+// Initialize
+
+document.addEventListener('DOMContentLoaded', () => {
+    const datePicker = document.getElementById('date-picker');
+    const searchInput = document.getElementById('searchInput');
+    const classFilter = document.getElementById('class-filter');
+    const exportButton = document.getElementById('exportButton');
+    const btnToday = document.getElementById('btnToday');
+    const btnYesterday = document.getElementById('btnYesterday');
+
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (datePicker) datePicker.value = formatDate(today);
+    if (btnToday) btnToday.classList.add('date-btn-active');
+
+    // Load classes dropdown
+    loadClasses();
+
+    // Initial load
+    fetchDashboardData();
+    updateClock();
+
+    setInterval(fetchDashboardData, 5000);
+    setInterval(updateClock, 1000);
+
+    let lastCheckedDate = formatDate(today);
+    setInterval(() => {
+        const currentDate = formatDate(new Date());
+        if (currentDate !== lastCheckedDate) {
+            lastCheckedDate = currentDate;
+            if (datePicker && datePicker.value === formatDate(yesterday)) {
+                datePicker.value = currentDate;
+                if (btnToday) btnToday.classList.add('date-btn-active');
+                if (btnYesterday) btnYesterday.classList.remove('date-btn-active');
+                fetchDashboardData();
+            }
+        }
+    }, 60000);
+
+    function updateDateButtons() {
+        if (!datePicker || !btnToday || !btnYesterday) return;
+        const selectedDate = datePicker.value;
+        if (selectedDate === formatDate(today)) {
+            btnToday.classList.add('date-btn-active');
+            btnYesterday.classList.remove('date-btn-active');
+        } else if (selectedDate === formatDate(yesterday)) {
+            btnYesterday.classList.add('date-btn-active');
+            btnToday.classList.remove('date-btn-active');
+        } else {
+            btnToday.classList.remove('date-btn-active');
+            btnYesterday.classList.remove('date-btn-active');
+        }
+    }
+
+    if (datePicker) {
+        datePicker.addEventListener('change', () => {
+            updateDateButtons();
+            fetchDashboardData();
+        });
+    }
+    if (classFilter) {
+        classFilter.addEventListener('change', () => {
+            fetchDashboardData();
+        });
+    }
+    const schoolFilter = document.getElementById('school-filter');
+    if (schoolFilter) {
+        schoolFilter.addEventListener('change', () => {
+            fetchDashboardData();
+        });
+    }
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            renderDashboard();
+        });
+    }
+    if (exportButton) {
+        exportButton.addEventListener('click', exportToCSV);
+    }
+    if (btnToday) {
+        btnToday.addEventListener('click', () => {
+            if (datePicker) datePicker.value = formatDate(today);
+            updateDateButtons();
+            fetchDashboardData();
+        });
+    }
+    if (btnYesterday) {
+        btnYesterday.addEventListener('click', () => {
+            if (datePicker) datePicker.value = formatDate(yesterday);
+            updateDateButtons();
+            fetchDashboardData();
+        });
+    }
+});
+
+// ...rest of dashboard.js code unchanged...

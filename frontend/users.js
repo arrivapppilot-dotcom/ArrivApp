@@ -1,7 +1,7 @@
 // Auto-detect if running on Cloudflare or localhost
 const API_BASE_URL = window.location.hostname.includes('trycloudflare.com') 
     ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
-    : 'http://localhost:8000';
+    : 'http://localhost:8088';
 let users = [];
 let schools = [];
 let editingUserId = null;

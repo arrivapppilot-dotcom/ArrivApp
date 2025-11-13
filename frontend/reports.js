@@ -1,7 +1,7 @@
 // Auto-detect if running on Cloudflare or localhost
 const API_BASE_URL = window.location.hostname.includes('trycloudflare.com') 
     ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
-    : 'http://localhost:8000';
+    : 'http://localhost:8088';
 const API_URL = `${API_BASE_URL}/api`;
 let currentUser = null;
 let dailyChart = null;

@@ -1,7 +1,7 @@
 // Auto-detect if running on Cloudflare or localhost
 const API_URL = window.location.hostname.includes('trycloudflare.com') 
     ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
-    : 'http://127.0.0.1:8000';
+    : 'http://127.0.0.1:8088';
 
 // Check authentication
 function checkAuth() {

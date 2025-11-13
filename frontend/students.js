@@ -1,7 +1,7 @@
 // API Configuration
 const API_BASE_URL = window.location.hostname.includes('trycloudflare.com') 
     ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
-    : 'http://localhost:8000';
+    : 'http://localhost:8088';
 
 let allStudents = [];
 let filteredStudents = [];
