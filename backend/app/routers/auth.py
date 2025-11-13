@@ -87,12 +87,12 @@ async def init_admin(db: Session = Depends(get_db)):
     
     # Create admin user
     try:
-        # Use a simple password and hash it carefully
-        password = "admin123"  # Simple 8-char password
+        # Use bcrypt directly to avoid passlib backend issues
+        import bcrypt as bcrypt_lib
         
-        # Hash the password with explicit encoding
-        from passlib.hash import bcrypt
-        hashed_pw = bcrypt.hash(password.encode('utf-8'))
+        password = "admin123"
+        salt = bcrypt_lib.gensalt()
+        hashed_pw = bcrypt_lib.hashpw(password.encode('utf-8'), salt).decode('utf-8')
         
         admin = User(
             username="admin",
@@ -109,7 +109,8 @@ async def init_admin(db: Session = Depends(get_db)):
             "message": "Admin user created successfully", 
             "status": "created", 
             "username": "admin",
-            "password": "admin123"
+            "password": "admin123",
+            "note": "Please login with these credentials"
         }
     except Exception as e:
         db.rollback()
