@@ -38,7 +38,18 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserSchema)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     """Get current user info."""
-    return current_user
+    # Manually construct the response to avoid ORM serialization issues
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "username": current_user.username,
+        "full_name": current_user.full_name,
+        "role": current_user.role,
+        "is_active": current_user.is_active,
+        "is_admin": current_user.is_admin,
+        "school_id": current_user.school_id,
+        "created_at": current_user.created_at
+    }
 
 
 @router.post("/register", response_model=UserSchema)
