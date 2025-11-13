@@ -143,7 +143,8 @@ app = FastAPI(
     },
 )
 
-# CORS middleware - MUST be added before routers
+# CORS middleware - MUST be added AFTER app creation but BEFORE routers are included
+# Note: add_middleware executes in LIFO (reverse) order, so this is added last but runs first
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -154,10 +155,10 @@ app.add_middleware(
         "https://arrivapp-frontend.onrender.com",
     ],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=600,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH", "TRACE"],
+    allow_headers=["Content-Type", "Authorization", "*"],
+    expose_headers=["Content-Type", "Authorization", "*"],
+    max_age=3600,
 )
 
 

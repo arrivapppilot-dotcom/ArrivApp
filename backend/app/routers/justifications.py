@@ -46,15 +46,16 @@ async def validate_parent_email(
     }
 
 
-@router.options("/")
+@router.options("/", tags=["Justifications"])
 async def options_justifications():
     """Handle CORS preflight requests for justifications endpoint."""
     return Response(
         status_code=200,
         headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Allow-Origin": "https://arrivapp-frontend.onrender.com",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+            "Access-Control-Max-Age": "3600",
         }
     )
 
