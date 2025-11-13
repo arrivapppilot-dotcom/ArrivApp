@@ -93,7 +93,21 @@ async def create_justification(
         db.commit()
         db.refresh(db_justification)
         
-        return db_justification
+        # Convert enums to strings for response
+        return {
+            "id": db_justification.id,
+            "student_id": db_justification.student_id,
+            "justification_type": db_justification.justification_type.value,
+            "date": db_justification.date,
+            "reason": db_justification.reason,
+            "submitted_by": db_justification.submitted_by,
+            "submitted_at": db_justification.submitted_at,
+            "status": db_justification.status.value,
+            "reviewed_by": db_justification.reviewed_by,
+            "reviewed_at": db_justification.reviewed_at,
+            "notes": db_justification.notes,
+            "student_name": student.name if student else None
+        }
     except HTTPException:
         raise
     except Exception as e:
