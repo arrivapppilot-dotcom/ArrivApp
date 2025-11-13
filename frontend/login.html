@@ -139,15 +139,7 @@
 
     <script src="config.js"></script>
     <script>
-<<<<<<< HEAD
-        // Auto-detect if running on Cloudflare or localhost
-        const API_BASE_URL = window.location.hostname.includes('trycloudflare.com') 
-            ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
-            : 'http://localhost:8088';
-
-=======
         // Use shared config.js for API_BASE_URL
->>>>>>> 9f15d0eae153ab3b33a76af26bd9d0987270a37e
         // Check if already logged in
         if (localStorage.getItem('arrivapp_token')) {
             window.location.href = 'dashboard.html';
