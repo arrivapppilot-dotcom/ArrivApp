@@ -19,15 +19,28 @@ async function getUserInfo() {
     if (!token) return;
 
     try {
+        console.log('Fetching user info from:', `${API_URL}/api/auth/me`);
         const response = await fetch(`${API_URL}/api/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
 
+        console.log('User info response status:', response.status);
+
+        if (response.status === 401) {
+            // Token expired or invalid
+            console.log('Token invalid, logging out');
+            logout();
+            return;
+        }
+
         if (response.ok) {
             const user = await response.json();
+            console.log('User info loaded:', user);
             document.getElementById('userEmail').textContent = user.email;
+        } else {
+            console.warn('Non-OK response for user info:', response.status);
         }
     } catch (error) {
         console.error('Error getting user info:', error);
@@ -40,20 +53,34 @@ async function loadSchools() {
     if (!token) return;
 
     try {
+        console.log('Fetching schools from:', `${API_URL}/api/schools/`);
         const response = await fetch(`${API_URL}/api/schools/`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
 
+        console.log('Schools response status:', response.status);
+
+        if (response.status === 401) {
+            // Unauthorized, force re-login
+            console.log('Schools endpoint: Unauthorized');
+            logout();
+            return;
+        }
+
         if (response.ok) {
             const schools = await response.json();
+            console.log('Schools loaded:', schools.length, 'schools');
             displaySchools(schools);
         } else {
-            console.error('Error loading schools');
+            const errText = await response.text().catch(() => '');
+            console.error('Error loading schools', response.status, errText);
+            displaySchools([]); // Show empty state
         }
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error in loadSchools:', error);
+        displaySchools([]); // Show empty state
     }
 }
 
@@ -282,13 +309,26 @@ async function updateSchool(event) {
 
 // Logout
 function logout() {
-    localStorage.removeItem('token');
+    // Ensure we clear the correct auth keys consistently across the app
+    localStorage.removeItem('arrivapp_token');
+    localStorage.removeItem('arrivapp_user');
     localStorage.removeItem('selectedSchoolId');
     window.location.href = 'login.html';
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    getUserInfo();
-    loadSchools();
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Page loaded, checking auth...');
+    console.log('API_URL:', API_URL);
+    console.log('Token in localStorage:', !!localStorage.getItem('arrivapp_token'));
+    
+    // Check auth first, then load data
+    const token = checkAuth();
+    if (token) {
+        console.log('Auth OK, loading user info and schools...');
+        await getUserInfo();
+        await loadSchools();
+    } else {
+        console.log('No token, redirecting to login');
+    }
 });
