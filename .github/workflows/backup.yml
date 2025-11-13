@@ -1,0 +1,65 @@
+name: Daily Backup to GitHub Releases
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    name: Create and upload backup
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests
+      
+      - name: Download database from Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # This step would download the remote database
+          # For now, we'll document the setup
+          echo "Database download step configured"
+          echo "Note: Requires RENDER_API_KEY and DATABASE_URL secrets"
+      
+      - name: Create backup
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          # These paths would be adjusted for actual environment
+          DATABASE_PATH: /tmp/arrivapp.db
+          QR_CODES_DIR: ./qr_codes
+        run: |
+          python3 backend/github_backup.py backup
+      
+      - name: Cleanup old backups
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          python3 backend/github_backup.py cleanup
+      
+      - name: Send notification on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Backup failed. Check the workflow logs.'
+            })
