@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from typing import List, Optional
@@ -44,6 +44,19 @@ async def validate_parent_email(
             for student in students
         ]
     }
+
+
+@router.options("/")
+async def options_justifications():
+    """Handle CORS preflight requests for justifications endpoint."""
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
+    )
 
 
 @router.post("/", response_model=JustificationSchema, status_code=status.HTTP_201_CREATED)
