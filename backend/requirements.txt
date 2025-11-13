@@ -1,3 +1,4 @@
+pip>=23.1
 setuptools
 wheel
 fastapi==0.109.0
