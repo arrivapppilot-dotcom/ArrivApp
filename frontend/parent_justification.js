@@ -1,6 +1,10 @@
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8000'
     : 'https://arrivapp-backend.onrender.com';
+
+console.log('Parent Justification Page Loaded');
+console.log('Window hostname:', window.location.hostname);
+console.log('API_BASE_URL:', API_BASE_URL);
 let studentsList = [];
 let validatedEmail = null;
 
@@ -120,12 +124,21 @@ document.getElementById('justificationForm').addEventListener('submit', async fu
     hideSuccess();
 
     try {
+        console.log('Submitting justification to:', `${API_BASE_URL}/api/justifications/`);
+        console.log('Payload:', data);
+        
         const response = await fetch(`${API_BASE_URL}/api/justifications/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(data)
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', {
+            'content-type': response.headers.get('content-type'),
+            'access-control-allow-origin': response.headers.get('access-control-allow-origin')
         });
 
         if (!response.ok) {
