@@ -59,11 +59,11 @@ async def lifespan(app: FastAPI):
     """Handle startup and shutdown events."""
     # Startup
     init_admin_user()
-    # Disabled scheduler for deployment without SMTP configuration
-    # start_scheduler()
+    # Start scheduler for automated email notifications
+    start_scheduler()
     yield
     # Shutdown
-    # stop_scheduler()
+    stop_scheduler()
     pass
 
 
