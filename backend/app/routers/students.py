@@ -151,36 +151,34 @@ async def get_student_qr(
     """Get student QR code - generates on-the-fly if not found."""
     from fastapi.responses import StreamingResponse
     import os
-    from app.services.qr_service import generate_qr_code
+    import io
+    import qrcode
     
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     
-    # Check if QR code file exists
-    qr_path = student.qr_code_path
+    # Create QR code data - the URL that will be scanned
+    qr_data = f"https://arrivapp-backend.onrender.com/api/checkin/scan?student_id={student.student_id}"
     
-    # If QR code doesn't exist on disk, generate it
-    if not qr_path or not os.path.exists(qr_path):
-        try:
-            # Generate new QR code with production URL
-            qr_path = generate_qr_code(student, base_url="https://arrivapp-backend.onrender.com")
-            
-            # Update database with new path
-            student.qr_code_path = qr_path
-            db.commit()
-        except Exception as e:
-            import traceback
-            print(f"QR generation error: {str(e)}")
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
+    # Generate QR code in memory
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(qr_data)
+    qr.make(fit=True)
     
-    # Read and return the file
-    try:
-        with open(qr_path, "rb") as f:
-            content = f.read()
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="QR code file not found")
+    # Create image
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Save to bytes
+    img_bytes = io.BytesIO()
+    img.save(img_bytes, format="PNG")
+    img_bytes.seek(0)
+    content = img_bytes.getvalue()
     
     return StreamingResponse(
         iter([content]),
