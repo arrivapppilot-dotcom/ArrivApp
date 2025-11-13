@@ -148,24 +148,40 @@ async def get_student_qr(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get student QR code."""
-    from fastapi.responses import FileResponse, StreamingResponse
+    """Get student QR code - generates on-the-fly if not found."""
+    from fastapi.responses import StreamingResponse
     import os
+    from app.services.qr_service import generate_qr_code
+    from app.core.config import get_settings
+    
+    settings = get_settings()
     
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     
-    if not student.qr_code_path:
-        raise HTTPException(status_code=404, detail="QR code not found")
+    # Check if QR code file exists
+    qr_path = student.qr_code_path
     
-    # Check if file exists
-    if not os.path.exists(student.qr_code_path):
-        raise HTTPException(status_code=404, detail="QR code file not found on disk")
+    # If QR code doesn't exist on disk, generate it
+    if not qr_path or not os.path.exists(qr_path):
+        try:
+            # Generate new QR code with the correct base URL
+            base_url = "https://arrivapp-backend.onrender.com" if "render" in str(settings.API_BASE_URL) else "http://localhost:8000"
+            qr_path = generate_qr_code(student, base_url=base_url)
+            
+            # Update database with new path
+            student.qr_code_path = qr_path
+            db.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
     
-    # Use streaming response to ensure CORS headers are applied
-    with open(student.qr_code_path, "rb") as f:
-        content = f.read()
+    # Read and return the file
+    try:
+        with open(qr_path, "rb") as f:
+            content = f.read()
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="QR code file not found")
     
     return StreamingResponse(
         iter([content]),
