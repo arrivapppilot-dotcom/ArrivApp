@@ -1,8 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import os
+import traceback
 from pathlib import Path
 from app.core.config import get_settings
 from app.core.database import engine, Base, SessionLocal
@@ -171,7 +173,37 @@ app.include_router(checkin.router)
 app.include_router(reports.router)
 app.include_router(justifications.router)
 
-# Create qr_codes directory if it doesn't exist
+
+# Exception handlers to ensure CORS headers are always sent
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Global exception handler that ensures CORS headers are included."""
+    print(f"Exception occurred: {str(exc)}")
+    print(traceback.format_exc())
+    
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+        headers={
+            "Access-Control-Allow-Origin": "https://arrivapp-frontend.onrender.com",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """HTTP exception handler that ensures CORS headers are included."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers={
+            "Access-Control-Allow-Origin": "https://arrivapp-frontend.onrender.com",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
+    )# Create qr_codes directory if it doesn't exist
 qr_codes_dir = Path("qr_codes")
 qr_codes_dir.mkdir(exist_ok=True)
 
