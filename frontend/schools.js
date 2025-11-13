@@ -227,29 +227,20 @@ function viewSchoolStudents(schoolId) {
 
 // Edit school
 async function editSchool(schoolId) {
-    console.log('editSchool called with ID:', schoolId);
     const token = checkAuth();
-    if (!token) {
-        console.log('No token found');
-        return;
-    }
+    if (!token) return;
 
     try {
-        console.log('Fetching school from:', `${API_URL}/api/schools/${schoolId}`);
         const response = await fetch(`${API_URL}/api/schools/${schoolId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
 
-        console.log('School response status:', response.status);
-
         if (response.ok) {
             const school = await response.json();
-            console.log('School data loaded:', school);
             showEditSchoolModal(school);
         } else {
-            console.error('Error response:', response.status);
             alert('Error al cargar los datos del colegio');
         }
     } catch (error) {
@@ -260,7 +251,6 @@ async function editSchool(schoolId) {
 
 // Show edit school modal
 function showEditSchoolModal(school) {
-    console.log('showEditSchoolModal called with school:', school);
     document.getElementById('editSchoolId').value = school.id;
     document.getElementById('editSchoolName').value = school.name;
     document.getElementById('editSchoolAddress').value = school.address || '';
@@ -268,10 +258,7 @@ function showEditSchoolModal(school) {
     document.getElementById('editSchoolPhone').value = school.contact_phone || '';
     document.getElementById('editSchoolTimezone').value = school.timezone;
     document.getElementById('editSchoolActive').checked = school.is_active;
-    const modal = document.getElementById('editSchoolModal');
-    console.log('Modal element:', modal);
-    modal.classList.remove('hidden');
-    console.log('Modal classes after remove hidden:', modal.className);
+    document.getElementById('editSchoolModal').classList.remove('hidden');
 }
 
 // Close edit school modal
