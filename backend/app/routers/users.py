@@ -15,6 +15,38 @@ from app.core.security import get_password_hash
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
 
+def serialize_user(user: User) -> dict:
+    """Manually serialize user object to dict for Pydantic v1 compatibility."""
+    result = {
+        "id": user.id,
+        "email": user.email,
+        "username": user.username,
+        "full_name": user.full_name,
+        "role": user.role.value if hasattr(user.role, 'value') else str(user.role),
+        "is_active": user.is_active,
+        "is_admin": user.is_admin,
+        "school_id": user.school_id,
+        "created_at": user.created_at.isoformat() if user.created_at else None
+    }
+    
+    # Add school if present
+    if hasattr(user, 'school') and user.school:
+        result["school"] = {
+            "id": user.school.id,
+            "name": user.school.name,
+            "address": user.school.address,
+            "contact_email": user.school.contact_email,
+            "contact_phone": user.school.contact_phone,
+            "timezone": user.school.timezone,
+            "is_active": user.school.is_active,
+            "created_at": user.school.created_at.isoformat() if user.school.created_at else None
+        }
+    else:
+        result["school"] = None
+    
+    return result
+
+
 @router.get("/", response_model=List[UserWithSchool])
 async def list_users(
     skip: int = 0,
@@ -23,8 +55,9 @@ async def list_users(
     current_admin: User = Depends(get_current_admin_user)
 ):
     """List all users (admin only)."""
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
+    from sqlalchemy.orm import joinedload
+    users = db.query(User).options(joinedload(User.school)).offset(skip).limit(limit).all()
+    return [serialize_user(user) for user in users]
 
 
 @router.get("/{user_id}", response_model=UserWithSchool)
@@ -34,10 +67,11 @@ async def get_user(
     current_admin: User = Depends(get_current_admin_user)
 ):
     """Get a specific user by ID (admin only)."""
-    user = db.query(User).filter(User.id == user_id).first()
+    from sqlalchemy.orm import joinedload
+    user = db.query(User).options(joinedload(User.school)).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return serialize_user(user)
 
 
 @router.post("/", response_model=UserWithSchool, status_code=status.HTTP_201_CREATED)
@@ -84,7 +118,7 @@ async def create_user(
     db.commit()
     db.refresh(db_user)
     
-    return db_user
+    return serialize_user(db_user)
 
 
 @router.put("/{user_id}", response_model=UserWithSchool)
@@ -126,7 +160,7 @@ async def update_user(
     db.commit()
     db.refresh(db_user)
     
-    return db_user
+    return serialize_user(db_user)
 
 
 @router.get("/search", response_model=UserWithSchool)
@@ -136,15 +170,16 @@ async def search_user(
     current_admin: User = Depends(get_current_admin_user)
 ):
     """Search for a user by username or email (admin only)."""
+    from sqlalchemy.orm import joinedload
     # Search by username or email
-    user = db.query(User).filter(
+    user = db.query(User).options(joinedload(User.school)).filter(
         (User.username == q) | (User.email == q)
     ).first()
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    return user
+    return serialize_user(user)
 
 
 @router.put("/{user_id}/reset-password", response_model=dict)

@@ -58,7 +58,7 @@ async function apiRequest(endpoint, options = {}) {
 // Load schools for dropdown
 async function loadSchools() {
     try {
-        schools = await apiRequest('/schools/');
+        schools = await apiRequest('/api/schools/');
         const schoolSelect = document.getElementById('schoolId');
         schoolSelect.innerHTML = '<option value="">Seleccionar colegio...</option>';
         schools.forEach(school => {
