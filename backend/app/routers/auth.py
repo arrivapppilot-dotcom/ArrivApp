@@ -87,10 +87,17 @@ async def init_admin(db: Session = Depends(get_db)):
     
     # Create admin user
     try:
+        # Use a simple password and hash it carefully
+        password = "admin123"  # Simple 8-char password
+        
+        # Hash the password with explicit encoding
+        from passlib.hash import bcrypt
+        hashed_pw = bcrypt.hash(password.encode('utf-8'))
+        
         admin = User(
             username="admin",
             email="admin@arrivapp.com",
-            hashed_password=get_password_hash("madrid123"),
+            hashed_password=hashed_pw,
             full_name="Administrator",
             role=UserRole.admin,
             is_admin=True,
@@ -98,7 +105,17 @@ async def init_admin(db: Session = Depends(get_db)):
         )
         db.add(admin)
         db.commit()
-        return {"message": "Admin user created successfully", "status": "created", "username": "admin"}
+        return {
+            "message": "Admin user created successfully", 
+            "status": "created", 
+            "username": "admin",
+            "password": "admin123"
+        }
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error creating admin user: {str(e)}")
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "status": "failed"
+        }
