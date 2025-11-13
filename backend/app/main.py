@@ -146,41 +146,13 @@ app = FastAPI(
 # CORS middleware - MUST be added before routers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://arrivapp-frontend.onrender.com",
-        "http://localhost:8080",
-        "http://localhost:3000",
-        "http://127.0.0.1:8080"
-    ],
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
     expose_headers=["*"],
-    max_age=3600,
 )
 
-# Add middleware to handle CORS preflight requests
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import Response
-
-class CORSPreflightMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if request.method == "OPTIONS":
-            return Response(
-                status_code=200,
-                headers={
-                    "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
-                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-                    "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, Origin, X-Requested-With",
-                    "Access-Control-Allow-Credentials": "true",
-                    "Access-Control-Max-Age": "3600",
-                }
-            )
-        response = await call_next(request)
-        return response
-
-app.add_middleware(CORSPreflightMiddleware)
 
 # Include routers
 app.include_router(auth.router)
