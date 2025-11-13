@@ -65,33 +65,40 @@ async def create_justification(
     db: Session = Depends(get_db)
 ):
     """Create a new justification (open endpoint for parents)."""
-    # Verify student exists
-    student = db.query(Student).filter(Student.id == justification.student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-    
-    # Verify the email matches the student's parent email
-    if justification.submitted_by.lower() != student.parent_email.lower():
-        raise HTTPException(
-            status_code=403, 
-            detail="Only the registered parent can submit justifications"
+    try:
+        # Verify student exists
+        student = db.query(Student).filter(Student.id == justification.student_id).first()
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")
+        
+        # Verify the email matches the student's parent email
+        if justification.submitted_by.lower() != student.parent_email.lower():
+            raise HTTPException(
+                status_code=403, 
+                detail="Only the registered parent can submit justifications"
+            )
+        
+        # Create justification
+        db_justification = Justification(
+            student_id=justification.student_id,
+            justification_type=JustificationType[justification.justification_type],
+            date=justification.date,
+            reason=justification.reason,
+            submitted_by=justification.submitted_by,
+            status=JustificationStatus.pending
         )
-    
-    # Create justification
-    db_justification = Justification(
-        student_id=justification.student_id,
-        justification_type=JustificationType[justification.justification_type],
-        date=justification.date,
-        reason=justification.reason,
-        submitted_by=justification.submitted_by,
-        status=JustificationStatus.pending
-    )
-    
-    db.add(db_justification)
-    db.commit()
-    db.refresh(db_justification)
-    
-    return db_justification
+        
+        db.add(db_justification)
+        db.commit()
+        db.refresh(db_justification)
+        
+        return db_justification
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating justification: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating justification: {str(e)}")
 
 
 @router.get("/", response_model=List[JustificationSchema])
