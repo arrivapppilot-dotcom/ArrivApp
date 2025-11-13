@@ -75,6 +75,7 @@ async def logout(current_user: User = Depends(get_current_user)):
     return {"message": "Successfully logged out"}
 
 
+@router.get("/init-admin")
 @router.post("/init-admin")
 async def init_admin(db: Session = Depends(get_db)):
     """Initialize admin user if it doesn't exist (public endpoint for first-time setup)."""
