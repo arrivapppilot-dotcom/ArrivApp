@@ -152,9 +152,6 @@ async def get_student_qr(
     from fastapi.responses import StreamingResponse
     import os
     from app.services.qr_service import generate_qr_code
-    from app.core.config import get_settings
-    
-    settings = get_settings()
     
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
@@ -166,14 +163,16 @@ async def get_student_qr(
     # If QR code doesn't exist on disk, generate it
     if not qr_path or not os.path.exists(qr_path):
         try:
-            # Generate new QR code with the correct base URL
-            base_url = "https://arrivapp-backend.onrender.com" if "render" in str(settings.API_BASE_URL) else "http://localhost:8000"
-            qr_path = generate_qr_code(student, base_url=base_url)
+            # Generate new QR code with production URL
+            qr_path = generate_qr_code(student, base_url="https://arrivapp-backend.onrender.com")
             
             # Update database with new path
             student.qr_code_path = qr_path
             db.commit()
         except Exception as e:
+            import traceback
+            print(f"QR generation error: {str(e)}")
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
     
     # Read and return the file
