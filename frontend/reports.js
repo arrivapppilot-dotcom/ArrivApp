@@ -1,14 +1,7 @@
-<<<<<<< HEAD
-// Auto-detect if running on Cloudflare or localhost
-const API_BASE_URL = window.location.hostname.includes('trycloudflare.com') 
-    ? 'https://enhancement-organizations-herb-patio.trycloudflare.com'
-    : 'http://localhost:8088';
-=======
 // Auto-detect environment and use appropriate API URL
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8000'
-    : 'https://arrivapp.onrender.com';
->>>>>>> 9f15d0eae153ab3b33a76af26bd9d0987270a37e
+    : 'https://arrivapp-backend.onrender.com';
 const API_URL = `${API_BASE_URL}/api`;
 let currentUser = null;
 let dailyChart = null;
