@@ -17,10 +17,12 @@ Base.metadata.create_all(bind=engine)
 async def lifespan(app: FastAPI):
     """Handle startup and shutdown events."""
     # Startup
-    start_scheduler()
+    # Disabled scheduler for deployment without SMTP configuration
+    # start_scheduler()
     yield
     # Shutdown
-    stop_scheduler()
+    # stop_scheduler()
+    pass
 
 
 # API Metadata
@@ -102,7 +104,7 @@ app = FastAPI(
 # CORS middleware - Allow all origins for testing
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for public testing
+    allow_origins=["https://arrivapp-frontend.onrender.com"],  # Only allow deployed frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

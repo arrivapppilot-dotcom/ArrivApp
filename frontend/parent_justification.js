@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 const API_BASE_URL = 'http://localhost:8088';
+=======
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000'
+    : 'https://arrivapp.onrender.com';
+>>>>>>> 9f15d0eae153ab3b33a76af26bd9d0987270a37e
 let studentsList = [];
 let validatedEmail = null;
 

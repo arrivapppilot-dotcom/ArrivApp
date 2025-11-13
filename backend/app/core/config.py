@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -11,14 +12,14 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
     
-    # Email
-    SMTP_HOST: str
-    SMTP_PORT: int
-    SMTP_USER: str
-    SMTP_PASSWORD: str
-    FROM_EMAIL: str
-    FROM_NAME: str
-    ADMIN_EMAIL: str
+    # Email (optional for deployment without email features)
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: Optional[int] = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    FROM_EMAIL: Optional[str] = None
+    FROM_NAME: Optional[str] = "ArrivApp"
+    ADMIN_EMAIL: Optional[str] = None
     
     # Application
     APP_NAME: str = "ArrivApp"
