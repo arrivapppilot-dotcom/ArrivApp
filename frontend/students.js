@@ -275,8 +275,9 @@ function closeStudentDetailModal() {
 }
 
 function editStudent() {
+    const studentId = currentEditingStudentId;
     closeStudentDetailModal();
-    editStudentDirect(currentEditingStudentId);
+    editStudentDirect(studentId);
 }
 
 function editStudentDirect(studentId) {
