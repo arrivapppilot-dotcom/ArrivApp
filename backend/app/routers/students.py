@@ -149,7 +149,8 @@ async def get_student_qr(
     current_user: User = Depends(get_current_user)
 ):
     """Get student QR code."""
-    from fastapi.responses import FileResponse
+    from fastapi.responses import FileResponse, StreamingResponse
+    import os
     
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
@@ -158,7 +159,24 @@ async def get_student_qr(
     if not student.qr_code_path:
         raise HTTPException(status_code=404, detail="QR code not found")
     
-    return FileResponse(student.qr_code_path)
+    # Check if file exists
+    if not os.path.exists(student.qr_code_path):
+        raise HTTPException(status_code=404, detail="QR code file not found on disk")
+    
+    # Use streaming response to ensure CORS headers are applied
+    with open(student.qr_code_path, "rb") as f:
+        content = f.read()
+    
+    return StreamingResponse(
+        iter([content]),
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f"attachment; filename=qr_student_{student_id}.png",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 
 @router.post("/{student_id}/regenerate-qr", response_model=StudentSchema)
