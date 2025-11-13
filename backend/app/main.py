@@ -143,13 +143,20 @@ app = FastAPI(
     },
 )
 
-# CORS middleware - Allow frontend origins
+# CORS middleware - MUST be added before routers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
-    allow_credentials=False,  # Must be False when using "*"
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[
+        "https://arrivapp-frontend.onrender.com",
+        "http://localhost:8080",
+        "http://localhost:3000",
+        "http://127.0.0.1:8080"
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 # Include routers
