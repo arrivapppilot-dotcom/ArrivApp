@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from app.core.database import get_db
 from app.core.security import verify_password, create_access_token, get_password_hash
-from app.models.models import User
+from app.models.models import User, UserRole
 from app.models.schemas import Token, LoginRequest, UserCreate, User as UserSchema
 from app.core.config import get_settings
 from app.core.deps import get_current_user, get_current_admin_user
@@ -73,3 +73,31 @@ async def register_user(
 async def logout(current_user: User = Depends(get_current_user)):
     """Logout (client should delete token)."""
     return {"message": "Successfully logged out"}
+
+
+@router.post("/init-admin")
+async def init_admin(db: Session = Depends(get_db)):
+    """Initialize admin user if it doesn't exist (public endpoint for first-time setup)."""
+    # Check if admin exists
+    admin = db.query(User).filter(User.username == "admin").first()
+    
+    if admin:
+        return {"message": "Admin user already exists", "status": "exists"}
+    
+    # Create admin user
+    try:
+        admin = User(
+            username="admin",
+            email="admin@arrivapp.com",
+            hashed_password=get_password_hash("madrid123"),
+            full_name="Administrator",
+            role=UserRole.admin,
+            is_admin=True,
+            is_active=True
+        )
+        db.add(admin)
+        db.commit()
+        return {"message": "Admin user created successfully", "status": "created", "username": "admin"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error creating admin user: {str(e)}")
