@@ -1,16 +1,14 @@
-name: Daily Backup to GitHub Releases
+name: Manual Backup Testing
 
 on:
-  schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
-  # Allow manual triggering
+  # Manual trigger only - this workflow tests the backup script
+  # For production backups, run locally: /Users/lucaalice/run_arrivapp_backup.sh
   workflow_dispatch:
 
 jobs:
   backup:
     runs-on: ubuntu-latest
-    name: Create and upload backup
+    name: Test backup script (requires local database)
     
     steps:
       - name: Checkout repository
@@ -25,16 +23,27 @@ jobs:
         run: |
           pip install requests
       
-      - name: Create backup from GitHub
+      - name: Create test backup (if database exists)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPO: ${{ github.repository }}
           DATABASE_PATH: ./backend/arrivapp.db
           QR_CODES_DIR: ./qr_codes
         run: |
-          python3 backend/github_backup.py backup
+          echo "⚠️  Production backups should run on your local machine:"
+          echo "📌 Command: /Users/lucaalice/run_arrivapp_backup.sh"
+          echo ""
+          if [ -f ./backend/arrivapp.db ]; then
+            echo "✅ Database found, creating backup..."
+            python3 backend/github_backup.py backup
+          else
+            echo "ℹ️  No database in repo (expected). To backup production:"
+            echo "   1. Run locally: /Users/lucaalice/run_arrivapp_backup.sh"
+            echo "   2. This creates releases at: https://github.com/${{ github.repository }}/releases"
+          fi
       
       - name: Cleanup old backups
+        if: success()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPO: ${{ github.repository }}
@@ -44,8 +53,8 @@ jobs:
       - name: Report success
         if: success()
         run: |
-          echo "✅ Backup completed successfully!"
-          echo "📌 Backups: https://github.com/${{ github.repository }}/releases"
+          echo "✅ Backup test completed!"
+          echo "📌 Check releases at: https://github.com/${{ github.repository }}/releases"
       
       - name: Report failure
         if: failure()
