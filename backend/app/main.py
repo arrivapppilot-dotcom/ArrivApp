@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from contextlib import asynccontextmanager
 import os
 import traceback
@@ -210,6 +210,14 @@ qr_codes_dir.mkdir(exist_ok=True)
 # Mount static files for QR codes
 app.mount("/qr_codes", StaticFiles(directory="qr_codes"), name="qr_codes")
 
+# Determine frontend directory
+backend_dir = Path(__file__).parent.parent.parent  # Go from main.py -> app -> backend -> project root
+frontend_dir = backend_dir / "frontend"
+
+print(f"Backend location: {Path(__file__).parent.parent}")
+print(f"Frontend path: {frontend_dir}")
+print(f"Frontend exists: {frontend_dir.exists()}")
+
 
 @app.get("/", tags=["Root"])
 async def root():
@@ -254,6 +262,45 @@ async def health_check():
         "service": "ArrivApp API",
         "version": settings.APP_VERSION
     }
+
+
+# Serve HTML files - catch-all for frontend
+@app.get("/{path:path}", tags=["Frontend"])
+async def serve_html(path: str):
+    """Serve HTML files from frontend directory"""
+    # Prevent serving API paths
+    if path.startswith("api/") or path.startswith("docs") or path.startswith("redoc"):
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    
+    # Try to serve the exact file if it exists
+    file_path = frontend_dir / path
+    
+    if file_path.exists() and file_path.is_file():
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(f.read())
+        except Exception as e:
+            print(f"Error serving {path}: {e}")
+            pass
+    
+    # For CSS, JS, images, etc. that don't exist, return 404 (not index.html)
+    if path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.ico', '.svg')):
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    
+    # For HTML files, if not found, try fallback to index.html for SPA routing
+    if path.endswith('.html'):
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    
+    # Try index.html as fallback only for non-file paths
+    index_path = frontend_dir / "index.html"
+    if index_path.exists():
+        try:
+            with open(index_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(f.read())
+        except Exception as e:
+            print(f"Error serving index.html: {e}")
+    
+    return JSONResponse({"detail": "Not Found"}, status_code=404)
 
 
 if __name__ == "__main__":
