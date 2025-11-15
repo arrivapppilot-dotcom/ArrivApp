@@ -1,9 +1,12 @@
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from functools import lru_cache
 from typing import Optional
 
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(env_file=".env")
+    
     # Database
     DATABASE_URL: str
     
@@ -29,9 +32,6 @@ class Settings(BaseSettings):
     CHECK_ABSENT_TIME: str = "09:10"
     TIMEZONE: str = "Europe/Madrid"
     FRONTEND_URL: str = "http://localhost:8080"
-    
-    class Config:
-        env_file = ".env"
 
 
 @lru_cache()
