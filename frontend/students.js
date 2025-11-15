@@ -195,20 +195,14 @@ function renderTable() {
                     <span class="status-badge ${statusClass}">${statusText}</span>
                 </td>
                 <td class="col-actions">
-                    <div class="flex gap-2 text-sm">
+                    <div class="flex gap-1">
                         <button onclick="event.stopPropagation(); viewStudentDetail(${student.id})" 
-                            class="text-indigo-600 hover:text-indigo-900 font-semibold">
-                            Ver
-                    </button>
-                    <button onclick="event.stopPropagation(); editStudentDirect(${student.id})" 
-                        class="text-violet-600 hover:text-violet-900 font-semibold mr-3">
-                        Editar
-                    </button>
-                    <button onclick="event.stopPropagation(); downloadStudentQR(${student.id})" 
-                        class="text-emerald-600 hover:text-emerald-900 font-semibold" title="Descargar QR">
-                        QR
-                    </button>
-                </td>
+                            class="text-indigo-600 hover:text-indigo-900 font-semibold text-xs px-1">Ver</button>
+                        <button onclick="event.stopPropagation(); editStudentDirect(${student.id})" 
+                            class="text-violet-600 hover:text-violet-900 font-semibold text-xs px-1">Editar</button>
+                        <button onclick="event.stopPropagation(); downloadStudentQR(${student.id})" 
+                            class="text-emerald-600 hover:text-emerald-900 font-semibold text-xs px-1" title="Descargar QR">QR</button>
+                    </div>
                 </td>
             </tr>
         `;

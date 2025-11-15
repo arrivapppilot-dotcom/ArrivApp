@@ -57,37 +57,39 @@
         .students-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
         .students-table th,
         .students-table td {
-            padding: 1rem 0.75rem;
+            padding: 0.875rem 0.5rem;
             text-align: left;
             border-bottom: 1px solid #e5e7eb;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .students-table th {
             font-weight: 600;
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            white-space: nowrap;
         }
         .students-table td {
-            font-size: 0.9rem;
+            font-size: 0.875rem;
         }
-        /* Column widths - fixed percentages */
-        .col-student { width: 20%; min-width: 150px; }
-        .col-id { width: 12%; min-width: 110px; }
-        .col-school { width: 18%; min-width: 140px; }
-        .col-class { width: 10%; min-width: 80px; }
-        .col-contact { width: 20%; min-width: 150px; }
-        .col-status { width: 10%; min-width: 80px; }
-        .col-actions { width: 10%; min-width: 90px; }
+        /* Column widths - using table-layout fixed */
+        .col-student { width: 18%; }
+        .col-id { width: 12%; }
+        .col-school { width: 18%; }
+        .col-class { width: 10%; }
+        .col-contact { width: 18%; }
+        .col-status { width: 10%; }
+        .col-actions { width: 14%; }
         
         @media (max-width: 1200px) {
             .students-table th,
             .students-table td {
-                padding: 0.75rem 0.5rem;
-                font-size: 0.85rem;
+                padding: 0.75rem 0.35rem;
+                font-size: 0.8rem;
             }
         }
     </style>
