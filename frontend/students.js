@@ -169,35 +169,36 @@ function renderTable() {
         return `
             <tr class="hover:bg-indigo-50 cursor-pointer transition-colors" onclick="viewStudentDetail(${student.id})">
                 <td class="col-student">
-                    <div class="flex items-center">
+                    <div class="flex items-center gap-3">
                         <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-indigo-100 to-violet-100 rounded-full flex items-center justify-center border-2 border-indigo-200">
-                            <span class="text-indigo-700 font-bold">${studentInitial}</span>
+                            <span class="text-indigo-700 font-bold text-sm">${studentInitial}</span>
                         </div>
-                        <div class="ml-4">
-                            <div class="text-sm font-semibold text-gray-900">${studentName}</div>
+                        <div class="min-w-0">
+                            <div class="text-sm font-semibold text-gray-900 truncate">${studentName}</div>
                         </div>
                     </div>
                 </td>
                 <td class="col-id">
-                    <div class="text-sm text-gray-900">${student.student_id}</div>
+                    <span class="text-sm text-gray-900">${student.student_id}</span>
                 </td>
                 <td class="col-school">
-                    <div class="text-sm text-gray-900">${school ? school.name : 'N/A'}</div>
+                    <span class="text-sm text-gray-900">${school ? school.name : 'N/A'}</span>
                 </td>
                 <td class="col-class">
-                    <div class="text-sm text-gray-900">${student.class_name || 'N/A'}</div>
+                    <span class="text-sm text-gray-900">${student.class_name || 'N/A'}</span>
                 </td>
                 <td class="col-contact">
-                    <div class="text-sm text-gray-900">${student.parent_email || 'N/A'}</div>
-                    <div class="text-sm text-gray-500">${student.parent_phone || ''}</div>
+                    <div class="text-sm text-gray-900 truncate">${student.parent_email || 'N/A'}</div>
+                    ${student.parent_phone ? `<div class="text-xs text-gray-500">${student.parent_phone}</div>` : ''}
                 </td>
                 <td class="col-status">
                     <span class="status-badge ${statusClass}">${statusText}</span>
                 </td>
-                <td class="col-actions text-sm">
-                    <button onclick="event.stopPropagation(); viewStudentDetail(${student.id})" 
-                        class="text-indigo-600 hover:text-indigo-900 font-semibold mr-3">
-                        Ver
+                <td class="col-actions">
+                    <div class="flex gap-2 text-sm">
+                        <button onclick="event.stopPropagation(); viewStudentDetail(${student.id})" 
+                            class="text-indigo-600 hover:text-indigo-900 font-semibold">
+                            Ver
                     </button>
                     <button onclick="event.stopPropagation(); editStudentDirect(${student.id})" 
                         class="text-violet-600 hover:text-violet-900 font-semibold mr-3">

@@ -54,41 +54,39 @@
             color: #991b1b;
         }
         /* Table responsive styles */
-        .students-table-wrapper {
-            width: 100%;
-            overflow: hidden;
-        }
         .students-table {
             width: 100%;
             border-collapse: collapse;
         }
-        .students-table td, .students-table th {
-            min-width: 0;
-            word-break: break-word;
-            overflow-wrap: break-word;
+        .students-table th,
+        .students-table td {
+            padding: 1rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
         }
         .students-table th {
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             white-space: nowrap;
-            padding: 1rem 0.75rem !important;
-            font-size: 0.8rem;
         }
         .students-table td {
-            padding: 1rem 0.75rem !important;
             font-size: 0.9rem;
         }
-        /* Column widths */
-        .col-student { flex: 1.2; min-width: 140px; }
-        .col-id { flex: 0.9; min-width: 110px; }
-        .col-school { flex: 1; min-width: 120px; }
-        .col-class { flex: 0.8; min-width: 100px; }
-        .col-contact { flex: 1.2; min-width: 140px; }
-        .col-status { flex: 0.7; min-width: 90px; }
-        .col-actions { flex: 0.9; min-width: 110px; }
+        /* Column widths - fixed percentages */
+        .col-student { width: 20%; min-width: 150px; }
+        .col-id { width: 12%; min-width: 110px; }
+        .col-school { width: 18%; min-width: 140px; }
+        .col-class { width: 10%; min-width: 80px; }
+        .col-contact { width: 20%; min-width: 150px; }
+        .col-status { width: 10%; min-width: 80px; }
+        .col-actions { width: 10%; min-width: 90px; }
         
-        @media (max-width: 1024px) {
+        @media (max-width: 1200px) {
             .students-table th,
             .students-table td {
-                padding: 0.75rem 0.5rem !important;
+                padding: 0.75rem 0.5rem;
                 font-size: 0.85rem;
             }
         }
@@ -184,19 +182,18 @@
 
         <!-- Students Table -->
         <div class="bg-white rounded-xl shadow-xl overflow-hidden border-2 border-gray-100">
-            <div class="students-table-wrapper">
-                <table class="students-table divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-indigo-600 to-violet-600">
-                        <tr>
-                            <th class="col-student text-left text-xs font-bold text-white uppercase tracking-wider">Alumno</th>
-                            <th class="col-id text-left text-xs font-bold text-white uppercase tracking-wider">ID Estudiante</th>
-                            <th class="col-school text-left text-xs font-bold text-white uppercase tracking-wider">Colegio</th>
-                            <th class="col-class text-left text-xs font-bold text-white uppercase tracking-wider">Clase</th>
-                            <th class="col-contact text-left text-xs font-bold text-white uppercase tracking-wider">Contacto</th>
-                            <th class="col-status text-left text-xs font-bold text-white uppercase tracking-wider">Estado</th>
-                            <th class="col-actions text-left text-xs font-bold text-white uppercase tracking-wider">Acciones</th>
-                        </tr>
-                    </thead>
+            <table class="students-table divide-y divide-gray-200">
+                <thead class="bg-gradient-to-r from-indigo-600 to-violet-600">
+                    <tr>
+                        <th class="col-student text-white uppercase tracking-wider">Alumno</th>
+                        <th class="col-id text-white uppercase tracking-wider">ID Estudiante</th>
+                        <th class="col-school text-white uppercase tracking-wider">Colegio</th>
+                        <th class="col-class text-white uppercase tracking-wider">Clase</th>
+                        <th class="col-contact text-white uppercase tracking-wider">Contacto</th>
+                        <th class="col-status text-white uppercase tracking-wider">Estado</th>
+                        <th class="col-actions text-white uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
                     <tbody id="studentsTableBody" class="bg-white divide-y divide-gray-200">
                         <tr>
                             <td colspan="7" class="text-center py-12">
@@ -210,7 +207,6 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
         </div>
     </div>
 
