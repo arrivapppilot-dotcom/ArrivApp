@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_, Integer
+from sqlalchemy import func, and_, or_, Integer, extract
 from typing import Optional, List
 from datetime import datetime, date, timedelta
 from app.core.database import get_db
@@ -255,8 +255,9 @@ async def get_tardiness_analysis(
     students_analysis.sort(key=lambda x: x['late_percentage'], reverse=True)
     
     # Get trends (week by week)
+    # Use PostgreSQL TO_CHAR for week formatting
     weekly_query = db.query(
-        func.strftime('%Y-%W', CheckIn.checkin_time).label('week'),
+        func.to_char(CheckIn.checkin_time, 'YYYY-IW').label('week'),
         func.count(CheckIn.id).label('total'),
         func.sum(func.cast(CheckIn.is_late, Integer)).label('late_count')
     ).join(Student)
@@ -271,7 +272,7 @@ async def get_tardiness_analysis(
             CheckIn.checkin_time >= start,
             CheckIn.checkin_time <= end
         )
-    ).group_by(func.strftime('%Y-%W', CheckIn.checkin_time))
+    ).group_by(func.to_char(CheckIn.checkin_time, 'YYYY-IW'))
     
     weekly_trends = weekly_query.all()
     
@@ -678,13 +679,13 @@ async def get_historical_analytics(
     # ===== WEEKDAY PATTERNS =====
     weekday_patterns = []
     for weekday in range(5):  # Monday=0 to Friday=4
-        # SQLite: 0=Sunday, 1=Monday, ..., 6=Saturday
+        # PostgreSQL: 1=Monday, ..., 7=Sunday (ISO 8601)
         # Python: 0=Monday, ..., 4=Friday
         # Convert: Monday(0) -> 1, Tuesday(1) -> 2, ..., Friday(4) -> 5
         dow_value = weekday + 1
         
         day_checkins = base_query.filter(
-            func.strftime('%w', CheckIn.checkin_time) == str(dow_value)
+            extract('isodow', CheckIn.checkin_time) == dow_value
         )
         
         total = day_checkins.count()
