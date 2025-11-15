@@ -267,7 +267,7 @@ async def health_check():
 # Serve HTML files - catch-all for frontend
 @app.get("/{path:path}", tags=["Frontend"])
 async def serve_html(path: str):
-    """Serve HTML files from frontend directory"""
+    """Serve HTML files from frontend directory with cache-busting headers"""
     # Prevent serving API paths
     if path.startswith("api/") or path.startswith("docs") or path.startswith("redoc"):
         return JSONResponse({"detail": "Not Found"}, status_code=404)
@@ -283,20 +283,26 @@ async def serve_html(path: str):
     
     if file_path.exists() and file_path.is_file():
         try:
+            # Add cache-busting headers to prevent stale CSS/JS
+            headers = {
+                "Cache-Control": "public, max-age=3600",
+                "ETag": str(file_path.stat().st_mtime)
+            }
+            
             # For text files (HTML, CSS, JS)
             if path.endswith(('.html', '.css', '.js', '.json')):
                 with open(file_path, "r", encoding="utf-8") as f:
                     if path.endswith('.html'):
-                        return HTMLResponse(f.read())
+                        return HTMLResponse(f.read(), headers=headers)
                     elif path.endswith('.css'):
-                        return FileResponse(file_path, media_type="text/css")
+                        return FileResponse(file_path, media_type="text/css", headers=headers)
                     elif path.endswith('.js'):
-                        return FileResponse(file_path, media_type="application/javascript")
+                        return FileResponse(file_path, media_type="application/javascript", headers=headers)
                     else:
-                        return FileResponse(file_path)
+                        return FileResponse(file_path, headers=headers)
             # For binary files (images, etc.)
             else:
-                return FileResponse(file_path)
+                return FileResponse(file_path, headers=headers)
         except Exception as e:
             print(f"Error serving {path}: {e}")
             return JSONResponse({"detail": "Error reading file"}, status_code=500)
@@ -315,7 +321,8 @@ async def serve_html(path: str):
     if index_path.exists() and index_path.is_file():
         try:
             with open(index_path, "r", encoding="utf-8") as f:
-                return HTMLResponse(f.read())
+                headers = {"Cache-Control": "public, max-age=3600"}
+                return HTMLResponse(f.read(), headers=headers)
         except Exception as e:
             print(f"Error serving index.html: {e}")
     
