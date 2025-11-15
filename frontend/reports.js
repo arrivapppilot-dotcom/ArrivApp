@@ -114,7 +114,10 @@ async function generateReport() {
     const reportType = document.getElementById('reportType').value;
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
-    const schoolId = document.getElementById('schoolFilter')?.value || null;
+    const rawSchoolValue = document.getElementById('schoolFilter')?.value;
+    const schoolId = rawSchoolValue && rawSchoolValue !== '' ? parseInt(rawSchoolValue) : null;
+
+    console.log('generateReport - School Filter:', { rawSchoolValue, schoolId, type: typeof schoolId });
 
     if (!startDate || !endDate) {
         alert('Por favor selecciona un rango de fechas');
@@ -151,6 +154,8 @@ async function generateStatistics(startDate, endDate, schoolId) {
     if (schoolId) {
         url += `&school_id=${schoolId}`;
     }
+
+    console.log('generateStatistics - URL:', url, '- schoolId:', schoolId);
 
     const response = await fetch(url, {
         headers: {
