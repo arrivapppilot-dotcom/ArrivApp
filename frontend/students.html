@@ -53,6 +53,45 @@
             background-color: #fee2e2;
             color: #991b1b;
         }
+        /* Table responsive styles */
+        .students-table-wrapper {
+            width: 100%;
+            overflow: hidden;
+        }
+        .students-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .students-table td, .students-table th {
+            min-width: 0;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .students-table th {
+            white-space: nowrap;
+            padding: 1rem 0.75rem !important;
+            font-size: 0.8rem;
+        }
+        .students-table td {
+            padding: 1rem 0.75rem !important;
+            font-size: 0.9rem;
+        }
+        /* Column widths */
+        .col-student { flex: 1.2; min-width: 140px; }
+        .col-id { flex: 0.9; min-width: 110px; }
+        .col-school { flex: 1; min-width: 120px; }
+        .col-class { flex: 0.8; min-width: 100px; }
+        .col-contact { flex: 1.2; min-width: 140px; }
+        .col-status { flex: 0.7; min-width: 90px; }
+        .col-actions { flex: 0.9; min-width: 110px; }
+        
+        @media (max-width: 1024px) {
+            .students-table th,
+            .students-table td {
+                padding: 0.75rem 0.5rem !important;
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -145,22 +184,22 @@
 
         <!-- Students Table -->
         <div class="bg-white rounded-xl shadow-xl overflow-hidden border-2 border-gray-100">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+            <div class="students-table-wrapper">
+                <table class="students-table divide-y divide-gray-200">
                     <thead class="bg-gradient-to-r from-indigo-600 to-violet-600">
                         <tr>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Alumno</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">ID Estudiante</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Colegio</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Clase</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Contacto</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Estado</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Acciones</th>
+                            <th class="col-student text-left text-xs font-bold text-white uppercase tracking-wider">Alumno</th>
+                            <th class="col-id text-left text-xs font-bold text-white uppercase tracking-wider">ID Estudiante</th>
+                            <th class="col-school text-left text-xs font-bold text-white uppercase tracking-wider">Colegio</th>
+                            <th class="col-class text-left text-xs font-bold text-white uppercase tracking-wider">Clase</th>
+                            <th class="col-contact text-left text-xs font-bold text-white uppercase tracking-wider">Contacto</th>
+                            <th class="col-status text-left text-xs font-bold text-white uppercase tracking-wider">Estado</th>
+                            <th class="col-actions text-left text-xs font-bold text-white uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="studentsTableBody" class="bg-white divide-y divide-gray-200">
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center">
+                            <td colspan="7" class="text-center py-12">
                                 <div class="flex flex-col items-center justify-center">
                                     <svg class="w-16 h-16 text-gray-300 mb-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>

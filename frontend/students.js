@@ -168,7 +168,7 @@ function renderTable() {
         
         return `
             <tr class="hover:bg-indigo-50 cursor-pointer transition-colors" onclick="viewStudentDetail(${student.id})">
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="col-student">
                     <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-indigo-100 to-violet-100 rounded-full flex items-center justify-center border-2 border-indigo-200">
                             <span class="text-indigo-700 font-bold">${studentInitial}</span>
@@ -178,23 +178,23 @@ function renderTable() {
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="col-id">
                     <div class="text-sm text-gray-900">${student.student_id}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="col-school">
                     <div class="text-sm text-gray-900">${school ? school.name : 'N/A'}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="col-class">
                     <div class="text-sm text-gray-900">${student.class_name || 'N/A'}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="col-contact">
                     <div class="text-sm text-gray-900">${student.parent_email || 'N/A'}</div>
                     <div class="text-sm text-gray-500">${student.parent_phone || ''}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="col-status">
                     <span class="status-badge ${statusClass}">${statusText}</span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <td class="col-actions text-sm">
                     <button onclick="event.stopPropagation(); viewStudentDetail(${student.id})" 
                         class="text-indigo-600 hover:text-indigo-900 font-semibold mr-3">
                         Ver
