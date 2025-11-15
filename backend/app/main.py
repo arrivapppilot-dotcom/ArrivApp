@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from contextlib import asynccontextmanager
 import os
 import traceback
@@ -272,28 +272,47 @@ async def serve_html(path: str):
     if path.startswith("api/") or path.startswith("docs") or path.startswith("redoc"):
         return JSONResponse({"detail": "Not Found"}, status_code=404)
     
-    # Try to serve the exact file if it exists
+    # Try to serve the exact file if it exists (for any file type)
     file_path = frontend_dir / path
+    
+    # Ensure path doesn't escape frontend directory
+    try:
+        file_path.resolve().relative_to(frontend_dir.resolve())
+    except ValueError:
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
     
     if file_path.exists() and file_path.is_file():
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                return HTMLResponse(f.read())
+            # For text files (HTML, CSS, JS)
+            if path.endswith(('.html', '.css', '.js', '.json')):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    if path.endswith('.html'):
+                        return HTMLResponse(f.read())
+                    elif path.endswith('.css'):
+                        return FileResponse(file_path, media_type="text/css")
+                    elif path.endswith('.js'):
+                        return FileResponse(file_path, media_type="application/javascript")
+                    else:
+                        return FileResponse(file_path)
+            # For binary files (images, etc.)
+            else:
+                return FileResponse(file_path)
         except Exception as e:
             print(f"Error serving {path}: {e}")
-            pass
+            return JSONResponse({"detail": "Error reading file"}, status_code=500)
     
-    # For CSS, JS, images, etc. that don't exist, return 404 (not index.html)
-    if path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.ico', '.svg')):
+    # For non-existent static files, return 404
+    if path.endswith(('.css', '.js', '.jpg', '.png', '.gif', '.ico', '.svg', '.pdf', '.woff', '.woff2')):
         return JSONResponse({"detail": "Not Found"}, status_code=404)
     
-    # For HTML files, if not found, try fallback to index.html for SPA routing
+    # For HTML files, return 404 if not found
     if path.endswith('.html'):
+        print(f"HTML file not found: {file_path}")
         return JSONResponse({"detail": "Not Found"}, status_code=404)
     
-    # Try index.html as fallback only for non-file paths
+    # Try index.html as fallback only for non-file paths (SPA routing)
     index_path = frontend_dir / "index.html"
-    if index_path.exists():
+    if index_path.exists() and index_path.is_file():
         try:
             with open(index_path, "r", encoding="utf-8") as f:
                 return HTMLResponse(f.read())
