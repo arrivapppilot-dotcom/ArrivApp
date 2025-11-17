@@ -254,6 +254,12 @@
             await checkPermissions();
             await loadSchools();
             await loadDashboardData();
+            
+            // Auto-refresh dashboard data every 30 seconds
+            setInterval(async () => {
+                console.log('Auto-refreshing dashboard data...');
+                await loadDashboardData();
+            }, 30000);
         });
 
         function updateCurrentTime() {
@@ -460,6 +466,7 @@
                 
                 const students = await studentsResponse.json();
                 console.log(`Loaded ${students.length} students`);
+                console.log(`Date filter value: ${today}`);
                 
                 // Fetch attendance records for today
                 const url = new URL(`${API_URL}/reports/attendance-history`, window.location.origin);
@@ -475,9 +482,11 @@
                     const records = data.records || [];
                     
                     console.log(`Loaded ${records.length} attendance records for ${today}`);
+                    console.log('Sample record:', records[0]);
                     
                     // Create a set of student IDs who have checked in
                     const checkedInIds = new Set(records.map(r => r.student_id));
+                    console.log(`Checked-in student IDs: ${checkedInIds.size}`);
                     
                     // Find unregistered students (not in check-ins)
                     const unregistered = students.filter(s => !checkedInIds.has(s.id)).map(s => ({
@@ -486,6 +495,7 @@
                         colegio: s.school ? s.school.name : '-',
                         email: s.parent_email || '-'
                     }));
+                    console.log(`Unregistered students: ${unregistered.length}`);
                     
                     // Organize check-in records by type
                     const late = [];
