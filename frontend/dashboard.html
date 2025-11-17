@@ -447,6 +447,20 @@
             const today = document.getElementById('dateFilter').value || new Date().toISOString().split('T')[0];
             
             try {
+                // Fetch all students
+                const studentsResponse = await fetch(`${API_URL}/students/`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!studentsResponse.ok) {
+                    console.error('Failed to load students:', studentsResponse.status);
+                    showAllTablesNoData();
+                    return;
+                }
+                
+                const students = await studentsResponse.json();
+                console.log(`Loaded ${students.length} students`);
+                
                 // Fetch attendance records for today
                 const url = new URL(`${API_URL}/reports/attendance-history`, window.location.origin);
                 url.searchParams.append('start_date', today);
@@ -460,62 +474,63 @@
                     const data = await response.json();
                     const records = data.records || [];
                     
-                    console.log(`Loaded ${records.length} attendance records`);
+                    console.log(`Loaded ${records.length} attendance records for ${today}`);
                     
-                    // Organize records by type
-                    const justified = [];
-                    const unregistered = [];
+                    // Create a set of student IDs who have checked in
+                    const checkedInIds = new Set(records.map(r => r.student_id));
+                    
+                    // Find unregistered students (not in check-ins)
+                    const unregistered = students.filter(s => !checkedInIds.has(s.id)).map(s => ({
+                        alumno: s.name,
+                        clase: s.class_name || '-',
+                        colegio: s.school ? s.school.name : '-',
+                        email: s.parent_email || '-'
+                    }));
+                    
+                    // Organize check-in records by type
                     const late = [];
                     const present = [];
                     
                     records.forEach(record => {
                         if (record.is_late) {
                             late.push({
-                                student: record.student_name,
-                                time: new Date(record.checkin_time).toLocaleTimeString('es-ES'),
-                                delay: `${Math.floor(Math.random() * 30) + 1} min`,
-                                justified: record.email_sent ? '✓ Sí' : 'No'
+                                alumno: record.student_name,
+                                hora_llegada: new Date(record.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
+                                retraso: '5 min',
+                                justificante: record.email_sent ? '✓ Sí' : '-'
                             });
                         } else {
                             present.push({
-                                student: record.student_name,
-                                entry: new Date(record.checkin_time).toLocaleTimeString('es-ES'),
-                                exit: record.checkout_time ? new Date(record.checkout_time).toLocaleTimeString('es-ES') : '-',
-                                status: 'Presente'
+                                alumno: record.student_name,
+                                hora_entrada: new Date(record.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
+                                hora_salida: record.checkout_time ? new Date(record.checkout_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}) : '-',
+                                estado: 'Presente'
                             });
                         }
                     });
                     
+                    console.log(`Unregistered: ${unregistered.length}, Late: ${late.length}, Present: ${present.length}`);
+                    
                     // Update tables
-                    updateTableUI('justifiedStudentsTable', justified, 4, ['Alumno', 'Tipo', 'Fecha', 'Estado']);
-                    updateTableUI('unregisteredStudentsTable', unregistered, 4, ['Alumno', 'Clase', 'Colegio', 'Email']);
-                    updateTableUI('lateArrivalsTable', late, 4, ['Alumno', 'Hora Llegada', 'Retraso', 'Justificante']);
-                    updateTableUI('presentStudentsTable', present, 4, ['Alumno', 'Hora Entrada', 'Hora Salida', 'Estado']);
+                    updateTableUI('justifiedStudentsTable', [], 4);
+                    updateTableUI('unregisteredStudentsTable', unregistered, 4);
+                    updateTableUI('lateArrivalsTable', late, 4);
+                    updateTableUI('presentStudentsTable', present, 4);
                 } else {
                     console.error('Failed to load attendance records:', response.status);
-                    const errorText = await response.text();
-                    console.error('Error details:', errorText);
-                    // Show "no data" message
-                    showNoData('justifiedStudentsTable', 4);
-                    showNoData('unregisteredStudentsTable', 4);
-                    showNoData('lateArrivalsTable', 4);
-                    showNoData('presentStudentsTable', 4);
+                    showAllTablesNoData();
                 }
             } catch (error) {
                 console.error('Error loading table data:', error);
-                // Show "no data" message
-                showNoData('justifiedStudentsTable', 4);
-                showNoData('unregisteredStudentsTable', 4);
-                showNoData('lateArrivalsTable', 4);
-                showNoData('presentStudentsTable', 4);
+                showAllTablesNoData();
             }
         }
 
-        function updateTableUI(tableId, records, colCount, headers) {
+        function updateTableUI(tableId, records, colCount) {
             const tableBody = document.getElementById(tableId);
             if (!tableBody) return;
             
-            if (records.length === 0) {
+            if (!records || records.length === 0) {
                 showNoData(tableId, colCount);
             } else {
                 // Populate with records
@@ -530,6 +545,13 @@
             if (tableBody) {
                 tableBody.innerHTML = `<tr><td colspan="${colCount}" style="text-align: center; color: #6b7280; padding: 2rem;">No hay datos disponibles</td></tr>`;
             }
+        }
+
+        function showAllTablesNoData() {
+            showNoData('justifiedStudentsTable', 4);
+            showNoData('unregisteredStudentsTable', 4);
+            showNoData('lateArrivalsTable', 4);
+            showNoData('presentStudentsTable', 4);
         }
 
         function logout() {
