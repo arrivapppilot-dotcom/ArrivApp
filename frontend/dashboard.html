@@ -274,12 +274,14 @@
             
             // Get user info
             try {
-                const response = await fetch(`${API_URL}/users/me`, {
+                const response = await fetch(`${API_URL}/auth/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
                     const user = await response.json();
-                    document.getElementById('userName').textContent = user.name || user.email;
+                    document.getElementById('userName').textContent = user.full_name || user.email;
+                } else {
+                    console.error('Failed to get user info:', response.status);
                 }
             } catch (error) {
                 console.error('Error fetching user info:', error);
@@ -289,7 +291,7 @@
         async function checkPermissions() {
             const token = localStorage.getItem('arrivapp_token');
             try {
-                const response = await fetch(`${API_URL}/users/me`, {
+                const response = await fetch(`${API_URL}/auth/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -300,6 +302,8 @@
                         document.getElementById('usersBtn').style.display = 'inline-block';
                         document.getElementById('schoolsBtn').style.display = 'inline-block';
                     }
+                } else {
+                    console.error('Failed to check permissions:', response.status);
                 }
             } catch (error) {
                 console.error('Error checking permissions:', error);
@@ -309,7 +313,7 @@
         async function loadSchools() {
             const token = localStorage.getItem('arrivapp_token');
             try {
-                const response = await fetch(`${API_URL}/schools/list`, {
+                const response = await fetch(`${API_URL}/schools/`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -321,6 +325,10 @@
                         option.textContent = school.name;
                         schoolSelect.appendChild(option);
                     });
+                } else {
+                    console.error('Failed to load schools:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error details:', errorText);
                 }
             } catch (error) {
                 console.error('Error loading schools:', error);
@@ -333,7 +341,13 @@
             document.getElementById('dateFilter').value = today;
             
             try {
-                const response = await fetch(`${API_URL}/reports/statistics?period=daily&start_date=${today}&end_date=${today}`, {
+                // Build URL with proper query parameters
+                const url = new URL(`${API_URL}/reports/statistics`, window.location.origin);
+                url.searchParams.append('period', 'daily');
+                url.searchParams.append('start_date', today);
+                url.searchParams.append('end_date', today);
+                
+                const response = await fetch(url.toString(), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -342,6 +356,8 @@
                     updateDashboard(data);
                 } else {
                     console.error('Failed to load data:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error details:', errorText);
                 }
             } catch (error) {
                 console.error('Error:', error);
