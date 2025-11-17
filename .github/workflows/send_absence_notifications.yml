@@ -1,0 +1,43 @@
+name: Send Absence Notifications at 9:01 AM
+
+on:
+  schedule:
+    # Run daily at 9:01 AM UTC to check for absent students
+    - cron: '1 9 * * *'
+  
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  send_absence_notifications:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt -q
+      
+      - name: Send absence notifications to parents
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          cd backend
+          python send_absence_notifications.py
+      
+      - name: Log results
+        if: always()
+        run: |
+          echo "Absence notification service completed"
