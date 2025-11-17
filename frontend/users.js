@@ -301,6 +301,13 @@ document.getElementById('userModal').addEventListener('click', (e) => {
     }
 });
 
+// Logout function
+function logout() {
+    localStorage.removeItem('arrivapp_token');
+    localStorage.removeItem('arrivapp_user');
+    window.location.href = 'login.html';
+}
+
 // Initialize
 loadSchools();
 loadUsers();
