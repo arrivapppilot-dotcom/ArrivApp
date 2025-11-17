@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, Integer, cast
 from typing import Optional, List
 from datetime import datetime, date, timedelta
 from app.core.database import get_db
@@ -244,8 +244,8 @@ def _generate_kitchen_snapshot_for_today(db: Session, school_id: Optional[int]) 
         
         # Count dietary needs
         dietary_counts = db.query(
-            func.sum(func.cast(StudentDietaryNeeds.has_allergies, Integer)).label('allergies'),
-            func.sum(func.cast(StudentDietaryNeeds.has_special_diet, Integer)).label('special_diet')
+            func.sum(cast(StudentDietaryNeeds.has_allergies, Integer)).label('allergies'),
+            func.sum(cast(StudentDietaryNeeds.has_special_diet, Integer)).label('special_diet')
         ).filter(
             StudentDietaryNeeds.student_id.in_([s.id for s in students])
         ).first()
