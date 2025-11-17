@@ -224,8 +224,8 @@
             <div class="section-title">⏰ Alumnos Llegada Tarde</div>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Alumno</th><th>Hora Llegada</th><th>Retraso</th><th>Justificante</th></tr></thead>
-                    <tbody id="lateArrivalsTable"><tr><td colspan="4" style="text-align: center; color: #6b7280;">Cargando...</td></tr></tbody>
+                    <thead><tr><th>Alumno</th><th>Hora Llegada</th><th>Retraso</th><th>Email Padres</th><th>Justificante</th></tr></thead>
+                    <tbody id="lateArrivalsTable"><tr><td colspan="5" style="text-align: center; color: #6b7280;">Cargando...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -234,8 +234,8 @@
             <div class="section-title">✓ Alumnos Presentes</div>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Alumno</th><th>Hora Entrada</th><th>Hora Salida</th><th>Estado</th></tr></thead>
-                    <tbody id="presentStudentsTable"><tr><td colspan="4" style="text-align: center; color: #6b7280;">Cargando...</td></tr></tbody>
+                    <thead><tr><th>Alumno</th><th>Hora Entrada</th><th>Hora Salida</th><th>Email Padres</th><th>Estado</th></tr></thead>
+                    <tbody id="presentStudentsTable"><tr><td colspan="5" style="text-align: center; color: #6b7280;">Cargando...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -507,6 +507,7 @@
                                 alumno: record.student_name,
                                 hora_llegada: new Date(record.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
                                 retraso: '5 min',
+                                email_padres: record.email_sent ? '✓ Enviado' : '✗ No enviado',
                                 justificante: record.email_sent ? '✓ Sí' : '-'
                             });
                         } else {
@@ -514,6 +515,7 @@
                                 alumno: record.student_name,
                                 hora_entrada: new Date(record.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
                                 hora_salida: record.checkout_time ? new Date(record.checkout_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}) : '-',
+                                email_padres: record.email_sent ? '✓ Enviado' : '✗ No enviado',
                                 estado: 'Presente'
                             });
                         }
@@ -524,8 +526,8 @@
                     // Update tables
                     updateTableUI('justifiedStudentsTable', [], 4);
                     updateTableUI('unregisteredStudentsTable', unregistered, 4);
-                    updateTableUI('lateArrivalsTable', late, 4);
-                    updateTableUI('presentStudentsTable', present, 4);
+                    updateTableUI('lateArrivalsTable', late, 5);
+                    updateTableUI('presentStudentsTable', present, 5);
                 } else {
                     console.error('Failed to load attendance records:', response.status);
                     showAllTablesNoData();
@@ -560,8 +562,8 @@
         function showAllTablesNoData() {
             showNoData('justifiedStudentsTable', 4);
             showNoData('unregisteredStudentsTable', 4);
-            showNoData('lateArrivalsTable', 4);
-            showNoData('presentStudentsTable', 4);
+            showNoData('lateArrivalsTable', 5);
+            showNoData('presentStudentsTable', 5);
         }
 
         function logout() {
