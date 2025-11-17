@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArrivApp - Planificador de Comedor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -12,43 +12,392 @@
             font-family: 'Inter', sans-serif; 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding-bottom: 3rem;
         }
-        .header { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
-        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-        .logo { display: flex; align-items: center; gap: 1rem; }
-        .logo h1 { font-size: 1.5rem; color: #1f2937; }
-        .logo p { font-size: 0.875rem; color: #6b7280; }
-        .buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
-        .btn { padding: 0.5rem 1rem; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 0.875rem; transition: all 0.3s; }
-        .btn-refresh { background: #4f46e5; color: white; }
-        .btn-refresh:hover { background: #4338ca; }
-        .btn-logout { background: #dc2626; color: white; }
-        .btn-logout:hover { background: #b91c1c; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
-        .section { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .section-title { font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 8px; text-align: center; }
-        .stat-value { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
-        .stat-label { font-size: 0.875rem; opacity: 0.9; }
-        .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
-        .class-card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; }
-        .class-card-title { font-size: 1rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; }
-        .class-card-stat { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.875rem; }
-        .class-card-label { color: #6b7280; }
-        .class-card-value { font-weight: 600; color: #1f2937; }
-        .progress-bar { width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; margin: 1rem 0; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 4px; }
-        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .dietary-item { display: flex; justify-content: space-between; padding: 0.5rem; background: #f3f4f6; border-radius: 6px; margin-bottom: 0.5rem; }
-        .dietary-label { font-size: 0.875rem; color: #1f2937; }
-        .dietary-count { background: #e5e7eb; padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: 600; font-size: 0.875rem; }
-        .last-update { text-align: center; color: #6b7280; font-size: 0.875rem; padding: 1rem 0; }
-        #loadingSpinner { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; }
+        
+        /* Header */
+        .header { 
+            background: white; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+            padding: 1.25rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .header-content { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            gap: 2rem;
+        }
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        .logo h1 { 
+            font-size: 1.75rem; 
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo p { 
+            font-size: 0.75rem; 
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: auto;
+        }
+        .header-date {
+            color: #6b7280;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        .btn { 
+            padding: 0.6rem 1.25rem; 
+            border-radius: 8px; 
+            border: none; 
+            font-weight: 600; 
+            cursor: pointer; 
+            font-size: 0.875rem; 
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-refresh { 
+            background: #4f46e5; 
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-refresh:hover { 
+            background: #4338ca;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        .btn-logout { 
+            background: #ef4444; 
+            color: white;
+        }
+        .btn-logout:hover { 
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        /* Main Container */
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 2rem 1rem;
+        }
+
+        /* Stats Overview */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-box {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s;
+            border-top: 4px solid #667eea;
+        }
+        .stat-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+        .stat-emoji { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .stat-number { 
+            font-size: 2.5rem; 
+            font-weight: 800; 
+            color: #1f2937;
+            margin: 0.5rem 0;
+        }
+        .stat-label { 
+            font-size: 0.75rem; 
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Class Grid */
+        .classes-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .class-card {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fafbff 100%);
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .class-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+            transform: translateY(-4px);
+        }
+        .class-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        .class-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        .class-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .class-total {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #667eea;
+            line-height: 1;
+        }
+        .class-total-label {
+            font-size: 0.65rem;
+            color: #9ca3af;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.25rem;
+        }
+        .attendance-badge {
+            background: #667eea;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        /* Class Stats */
+        .class-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .stat-row-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .stat-row-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .stat-row.present .stat-row-value { color: #10b981; }
+        .stat-row.absent .stat-row-value { color: #ef4444; }
+        .stat-row.arriving .stat-row-value { color: #f59e0b; }
+
+        /* Progress Bar */
+        .progress-container {
+            margin: 1.25rem 0;
+        }
+        .progress-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+
+        /* Dietary Section */
+        .dietary-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .dietary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .dietary-column h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dietary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .dietary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: all 0.2s;
+        }
+        .dietary-item:hover {
+            background: #f3f4f6;
+        }
+        .dietary-name {
+            font-weight: 500;
+            color: #1f2937;
+        }
+        .dietary-badge {
+            background: #667eea;
+            color: white;
+            padding: 0.35rem 0.85rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #9ca3af;
+        }
+
+        /* Last Update */
+        .last-update {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.875rem;
+            padding: 1.5rem 0;
+        }
+        .last-update p {
+            margin: 0.25rem 0;
+        }
+
+        /* Loading */
+        #loadingSpinner { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 999; 
+            align-items: center; 
+            justify-content: center;
+        }
         #loadingSpinner.show { display: flex; }
-        .spinner { background: white; padding: 2rem; border-radius: 8px; text-align: center; }
-        .spinner-circle { display: inline-block; width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner { 
+            background: white; 
+            padding: 2.5rem; 
+            border-radius: 12px; 
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .spinner-circle { 
+            display: inline-block; 
+            width: 50px; 
+            height: 50px; 
+            border: 4px solid #e5e7eb; 
+            border-top-color: #667eea; 
+            border-radius: 50%; 
+            animation: spin 0.8s linear infinite;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .stats-overview {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 0.75rem;
+            }
+            .stat-number {
+                font-size: 2rem;
+            }
+            .stat-emoji {
+                font-size: 2rem;
+            }
+            .class-grid {
+                grid-template-columns: 1fr;
+            }
+            .class-stats {
+                grid-template-columns: 1fr;
+            }
+            .dietary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -56,13 +405,13 @@
     <div class="header">
         <div class="header-content">
             <div class="logo">
-                <h1>🍽️ ArrivApp Comedor</h1>
-                <p>Planificador de Comidas</p>
+                <h1>🍽️ Comedor</h1>
+                <p>Kitchen Manager</p>
             </div>
-            <div class="buttons">
-                <span id="currentDate" style="color: #6b7280; font-size: 0.875rem;"></span>
+            <div class="header-actions">
+                <span class="header-date" id="currentDate"></span>
                 <button onclick="refreshData()" class="btn btn-refresh">🔄 Actualizar</button>
-                <button onclick="logout()" class="btn btn-logout">Cerrar Sesión</button>
+                <button onclick="logout()" class="btn btn-logout">Salir</button>
             </div>
         </div>
     </div>
@@ -71,63 +420,63 @@
     <div id="loadingSpinner">
         <div class="spinner">
             <div class="spinner-circle"></div>
-            <p style="margin-top: 1rem; color: #6b7280;">Cargando datos...</p>
+            <p style="margin-top: 1rem; color: #6b7280; font-weight: 500;">Cargando...</p>
         </div>
     </div>
 
     <!-- Main Container -->
     <div class="container">
-        <!-- Overview Statistics Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
-                <div class="stat-label">Total Estudiantes</div>
-                <div class="stat-value" id="totalStudents">0</div>
+        <!-- Stats Overview -->
+        <div class="stats-overview">
+            <div class="stat-box">
+                <div class="stat-emoji">👥</div>
+                <div class="stat-number" id="totalStudents">0</div>
+                <div class="stat-label">Total</div>
             </div>
-            <div class="stat-card">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">✅</div>
-                <div class="stat-label">Ya Presentes</div>
-                <div class="stat-value" id="expectedToEat">0</div>
+            <div class="stat-box">
+                <div class="stat-emoji">✅</div>
+                <div class="stat-number" id="expectedToEat">0</div>
+                <div class="stat-label">Presentes</div>
             </div>
-            <div class="stat-card">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">❌</div>
+            <div class="stat-box">
+                <div class="stat-emoji">❌</div>
+                <div class="stat-number" id="absent">0</div>
                 <div class="stat-label">Ausentes</div>
-                <div class="stat-value" id="absent">0</div>
             </div>
-            <div class="stat-card">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
-                <div class="stat-label">Con Alergias</div>
-                <div class="stat-value" id="withAllergies">0</div>
+            <div class="stat-box">
+                <div class="stat-emoji">⚠️</div>
+                <div class="stat-number" id="withAllergies">0</div>
+                <div class="stat-label">Alergias</div>
             </div>
-            <div class="stat-card">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🌱</div>
-                <div class="stat-label">Dieta Especial</div>
-                <div class="stat-value" id="withSpecialDiet">0</div>
+            <div class="stat-box">
+                <div class="stat-emoji">🌱</div>
+                <div class="stat-number" id="withSpecialDiet">0</div>
+                <div class="stat-label">Dieta Esp.</div>
             </div>
         </div>
 
-        <!-- Class Grid Section -->
-        <div class="section">
-            <div class="section-title">📋 Estudiantes por Clase</div>
+        <!-- Classes Section -->
+        <div class="classes-section">
+            <div class="section-header">📋 Estudiantes por Clase</div>
             <div id="classGrid" class="class-grid">
-                <p style="color: #6b7280;">Cargando datos...</p>
+                <div class="empty-state">Cargando datos...</div>
             </div>
         </div>
 
-        <!-- Dietary Summary Section -->
-        <div class="section">
-            <div class="section-title">🍽️ Resumen de Dietas Especiales</div>
-            <div class="two-column">
-                <div>
-                    <h3 style="font-weight: 600; color: #1f2937; margin-bottom: 1rem;">Alergias Comunes</h3>
-                    <div id="allergiesList">
-                        <p style="color: #6b7280; font-size: 0.875rem;">Cargando...</p>
+        <!-- Dietary Section -->
+        <div class="dietary-section">
+            <div class="section-header">🍽️ Dietas Especiales</div>
+            <div class="dietary-grid">
+                <div class="dietary-column">
+                    <h3>⚠️ Alergias Comunes</h3>
+                    <div id="allergiesList" class="dietary-list">
+                        <div class="empty-state">Cargando...</div>
                     </div>
                 </div>
-                <div>
-                    <h3 style="font-weight: 600; color: #1f2937; margin-bottom: 1rem;">Dietas Especiales Comunes</h3>
-                    <div id="dietsList">
-                        <p style="color: #6b7280; font-size: 0.875rem;">Cargando...</p>
+                <div class="dietary-column">
+                    <h3>🌱 Dietas Especiales</h3>
+                    <div id="dietsList" class="dietary-list">
+                        <div class="empty-state">Cargando...</div>
                     </div>
                 </div>
             </div>
@@ -135,7 +484,7 @@
 
         <!-- Last Update -->
         <div class="last-update">
-            <p>Última actualización: <span id="lastUpdate">--:--</span></p>
+            <p><strong>Última actualización:</strong> <span id="lastUpdate">--:--</span></p>
             <p>Los datos se capturan automáticamente cada día a las 10:00 AM</p>
         </div>
     </div>
@@ -146,7 +495,7 @@
         // Get and format current date
         function updateCurrentDate() {
             const now = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
             document.getElementById('currentDate').textContent = now.toLocaleDateString('es-ES', options);
             document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('es-ES');
         }
@@ -176,14 +525,10 @@
                 }
 
                 const response = await fetch(`${API_URL}/comedor/today`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
                 const data = await response.json();
 
@@ -198,10 +543,14 @@
                 const classGrid = document.getElementById('classGrid');
                 classGrid.innerHTML = '';
 
-                data.by_class.forEach(cls => {
-                    const card = createClassCard(cls);
-                    classGrid.appendChild(card);
-                });
+                if (data.by_class.length === 0) {
+                    classGrid.innerHTML = '<div class="empty-state">No hay clases disponibles</div>';
+                } else {
+                    data.by_class.forEach(cls => {
+                        const card = createClassCard(cls);
+                        classGrid.appendChild(card);
+                    });
+                }
 
                 document.getElementById('loadingSpinner').classList.remove('show');
             } catch (error) {
@@ -221,43 +570,52 @@
                 : 0;
 
             card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div class="class-header">
                     <div>
-                        <h3 class="class-card-title">Clase ${cls.class_name}</h3>
-                        <div style="font-size: 2.5rem; font-weight: 800; color: #667eea; margin: 0.5rem 0;">${cls.total_students}</div>
-                        <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">Total de estudiantes</p>
+                        <div class="class-name">Clase ${cls.class_name}</div>
+                        <div class="class-total">${cls.total_students}</div>
+                        <div class="class-total-label">Estudiantes</div>
                     </div>
-                    <span style="background: #667eea; color: white; padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600; height: fit-content;">${attendancePercentage}%</span>
+                    <div class="attendance-badge">${attendancePercentage}%</div>
                 </div>
-                
-                <div>
-                    <div class="class-card-stat">
-                        <span class="class-card-label" style="color: #059669;">✅ Presentes:</span>
-                        <span class="class-card-value" style="color: #059669;">${cls.present}</span>
+
+                <div class="class-stats">
+                    <div class="stat-row present">
+                        <span class="stat-row-label">✅ Presentes</span>
+                        <span class="stat-row-value">${cls.present}</span>
                     </div>
-                    <div class="class-card-stat">
-                        <span class="class-card-label" style="color: #dc2626;">❌ Ausentes:</span>
-                        <span class="class-card-value" style="color: #dc2626;">${cls.absent}</span>
+                    <div class="stat-row absent">
+                        <span class="stat-row-label">❌ Ausentes</span>
+                        <span class="stat-row-value">${cls.absent}</span>
                     </div>
-                    <div class="class-card-stat">
-                        <span class="class-card-label" style="color: #ca8a04;">Llegarán:</span>
-                        <span class="class-card-value" style="color: #ca8a04;">${cls.will_arrive_later}</span>
+                    <div class="stat-row arriving">
+                        <span class="stat-row-label">⏰ Llegarán</span>
+                        <span class="stat-row-value">${cls.will_arrive_later}</span>
                     </div>
-                    
-                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1rem 0;">
-                    
-                    <div class="class-card-stat">
-                        <span class="class-card-label" style="font-size: 0.75rem;">⚠️ Con Alergias:</span>
-                        <span class="class-card-value" style="color: #ca8a04;">${cls.with_allergies}</span>
-                    </div>
-                    <div class="class-card-stat">
-                        <span class="class-card-label" style="font-size: 0.75rem;">🌱 Dieta Especial:</span>
-                        <span class="class-card-value" style="color: #9333ea;">${cls.with_special_diet}</span>
+                    <div class="stat-row">
+                        <span class="stat-row-label">👥 Capacidad</span>
+                        <span class="stat-row-value" style="color: #667eea;">${cls.total_students}</span>
                     </div>
                 </div>
-                
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${attendancePercentage}%"></div>
+
+                <div class="progress-container">
+                    <div class="progress-label">Asistencia</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${attendancePercentage}%"></div>
+                    </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1rem 0;">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem;">
+                    <div style="background: #fef3c7; padding: 0.75rem; border-radius: 6px; text-align: center; border-left: 3px solid #f59e0b;">
+                        <div style="color: #92400e; font-weight: 700;">⚠️ ${cls.with_allergies}</div>
+                        <div style="color: #b45309; font-size: 0.7rem; margin-top: 0.25rem;">Con Alergias</div>
+                    </div>
+                    <div style="background: #e0e7ff; padding: 0.75rem; border-radius: 6px; text-align: center; border-left: 3px solid #667eea;">
+                        <div style="color: #3730a3; font-weight: 700;">🌱 ${cls.with_special_diet}</div>
+                        <div style="color: #4f46e5; font-size: 0.7rem; margin-top: 0.25rem;">Dieta Esp.</div>
+                    </div>
                 </div>
             `;
             
@@ -271,9 +629,7 @@
                 if (!token) return;
 
                 const response = await fetch(`${API_URL}/comedor/dietary-summary`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (!response.ok) throw new Error('Failed to load dietary summary');
@@ -285,12 +641,12 @@
                 if (data.with_allergies.common_allergies.length > 0) {
                     allergiesList.innerHTML = data.with_allergies.common_allergies.map(([allergy, count]) => `
                         <div class="dietary-item">
-                            <span class="dietary-label">${allergy}</span>
-                            <span class="dietary-count">${count}</span>
+                            <span class="dietary-name">${allergy}</span>
+                            <span class="dietary-badge">${count}</span>
                         </div>
                     `).join('');
                 } else {
-                    allergiesList.innerHTML = '<p style="color: #6b7280; font-size: 0.875rem;">Sin alergias reportadas</p>';
+                    allergiesList.innerHTML = '<div class="empty-state">Sin alergias reportadas</div>';
                 }
 
                 // Update diets list
@@ -298,12 +654,12 @@
                 if (data.with_special_diet.common_diets.length > 0) {
                     dietsList.innerHTML = data.with_special_diet.common_diets.map(([diet, count]) => `
                         <div class="dietary-item">
-                            <span class="dietary-label">${diet}</span>
-                            <span class="dietary-count">${count}</span>
+                            <span class="dietary-name">${diet}</span>
+                            <span class="dietary-badge">${count}</span>
                         </div>
                     `).join('');
                 } else {
-                    dietsList.innerHTML = '<p style="color: #6b7280; font-size: 0.875rem;">Sin dietas especiales reportadas</p>';
+                    dietsList.innerHTML = '<div class="empty-state">Sin dietas especiales reportadas</div>';
                 }
             } catch (error) {
                 console.error('Error loading dietary summary:', error);
