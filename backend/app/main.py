@@ -8,7 +8,7 @@ import traceback
 from pathlib import Path
 from app.core.config import get_settings
 from app.core.database import engine, Base, SessionLocal
-from app.routers import auth, students, checkin, schools, users, reports, justifications
+from app.routers import auth, students, checkin, schools, users, reports, justifications, comedor
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
@@ -172,6 +172,7 @@ app.include_router(students.router)
 app.include_router(checkin.router)
 app.include_router(reports.router)
 app.include_router(justifications.router)
+app.include_router(comedor.router)
 
 
 # Exception handlers to ensure CORS headers are always sent

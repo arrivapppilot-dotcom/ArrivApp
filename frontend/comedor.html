@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArrivApp - Planificador de Comedor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-blue-600">🍽️ ArrivApp Comedor</h1>
+                    <span class="ml-4 text-gray-600">Planificador de Comidas</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="currentDate" class="text-sm text-gray-600"></span>
+                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-8 rounded-lg shadow-xl">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p class="text-center mt-4 text-gray-600">Cargando datos...</p>
+            </div>
+        </div>
+
+        <!-- Overview Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <!-- Total Students -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold">Total Estudiantes</p>
+                        <p class="text-3xl font-bold text-blue-600 mt-2" id="totalStudents">0</p>
+                    </div>
+                    <div class="text-4xl">👥</div>
+                </div>
+            </div>
+
+            <!-- Expected to Eat -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold">Ya Presentes</p>
+                        <p class="text-3xl font-bold text-green-600 mt-2" id="expectedToEat">0</p>
+                    </div>
+                    <div class="text-4xl">✅</div>
+                </div>
+            </div>
+
+            <!-- Absent -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold">Ausentes</p>
+                        <p class="text-3xl font-bold text-red-600 mt-2" id="absent">0</p>
+                    </div>
+                    <div class="text-4xl">❌</div>
+                </div>
+            </div>
+
+            <!-- Allergies -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-yellow-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold">Con Alergias</p>
+                        <p class="text-3xl font-bold text-yellow-600 mt-2" id="withAllergies">0</p>
+                    </div>
+                    <div class="text-4xl">⚠️</div>
+                </div>
+            </div>
+
+            <!-- Special Diet -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-semibold">Dieta Especial</p>
+                        <p class="text-3xl font-bold text-purple-600 mt-2" id="withSpecialDiet">0</p>
+                    </div>
+                    <div class="text-4xl">🌱</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class Grid -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">📋 Estudiantes por Clase</h2>
+                <button onclick="refreshData()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    🔄 Actualizar
+                </button>
+            </div>
+
+            <div id="classGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <!-- Class cards will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Dietary Summary -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🍽️ Resumen de Dietas Especiales</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Allergies Summary -->
+                <div class="border rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Alergias Comunes</h3>
+                    <div id="allergiesList" class="space-y-3">
+                        <p class="text-gray-600 text-sm">Cargando...</p>
+                    </div>
+                </div>
+
+                <!-- Special Diets Summary -->
+                <div class="border rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Dietas Especiales Comunes</h3>
+                    <div id="dietsList" class="space-y-3">
+                        <p class="text-gray-600 text-sm">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Last Update -->
+        <div class="text-center text-gray-600 text-sm">
+            <p>Última actualización: <span id="lastUpdate">--:--</span></p>
+            <p>Los datos se capturan automáticamente cada día a las 10:00 AM</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = localStorage.getItem('api_url') || 'https://arrivapp-backend.onrender.com/api';
+
+        // Get and format current date
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('es-ES', options);
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('es-ES');
+        }
+
+        // Initialize
+        async function init() {
+            updateCurrentDate();
+            await loadKitchenData();
+            await loadDietarySummary();
+            
+            // Refresh every 5 minutes
+            setInterval(() => {
+                loadKitchenData();
+                updateCurrentDate();
+            }, 5 * 60 * 1000);
+        }
+
+        // Load kitchen data
+        async function loadKitchenData() {
+            try {
+                document.getElementById('loadingSpinner').classList.remove('hidden');
+                
+                const token = localStorage.getItem('arrivapp_token');
+                if (!token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const response = await fetch(`${API_URL}/comedor/today`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update overview statistics
+                document.getElementById('totalStudents').textContent = data.overview.total_students;
+                document.getElementById('expectedToEat').textContent = data.overview.expected_to_eat;
+                document.getElementById('absent').textContent = data.overview.absent;
+                document.getElementById('withAllergies').textContent = data.overview.with_allergies;
+                document.getElementById('withSpecialDiet').textContent = data.overview.with_special_diet;
+
+                // Update class grid
+                const classGrid = document.getElementById('classGrid');
+                classGrid.innerHTML = '';
+
+                data.by_class.forEach(cls => {
+                    const card = createClassCard(cls);
+                    classGrid.appendChild(card);
+                });
+
+                document.getElementById('loadingSpinner').classList.add('hidden');
+            } catch (error) {
+                console.error('Error loading kitchen data:', error);
+                alert('Error cargando datos del comedor. Por favor intenta de nuevo.');
+                document.getElementById('loadingSpinner').classList.add('hidden');
+            }
+        }
+
+        // Create class card
+        function createClassCard(cls) {
+            const card = document.createElement('div');
+            card.className = 'bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-6 border-l-4 border-blue-500';
+            
+            const attendancePercentage = cls.total_students > 0 
+                ? Math.round((cls.present / cls.total_students) * 100)
+                : 0;
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-xl font-bold text-blue-600">Clase ${cls.class_name}</h3>
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">${attendancePercentage}%</span>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">Total:</span>
+                        <span class="font-semibold text-gray-900">${cls.total_students}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-green-700">Presentes:</span>
+                        <span class="font-semibold text-green-600">${cls.present}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-red-700">Ausentes:</span>
+                        <span class="font-semibold text-red-600">${cls.absent}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-yellow-700">Llegarán:</span>
+                        <span class="font-semibold text-yellow-600">${cls.will_arrive_later}</span>
+                    </div>
+                    
+                    <hr class="my-3 border-blue-200">
+                    
+                    <div class="flex justify-between">
+                        <span class="text-yellow-700 text-sm">⚠️ Con Alergias:</span>
+                        <span class="font-semibold text-yellow-600">${cls.with_allergies}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-purple-700 text-sm">🌱 Dieta Especial:</span>
+                        <span class="font-semibold text-purple-600">${cls.with_special_diet}</span>
+                    </div>
+                </div>
+                
+                <div class="mt-4 bg-blue-500 rounded-lg p-2">
+                    <div class="w-full bg-gray-300 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: ${attendancePercentage}%"></div>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Load dietary summary
+        async function loadDietarySummary() {
+            try {
+                const token = localStorage.getItem('arrivapp_token');
+                if (!token) return;
+
+                const response = await fetch(`${API_URL}/comedor/dietary-summary`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load dietary summary');
+
+                const data = await response.json();
+
+                // Update allergies list
+                const allergiesList = document.getElementById('allergiesList');
+                if (data.with_allergies.common_allergies.length > 0) {
+                    allergiesList.innerHTML = data.with_allergies.common_allergies.map(([allergy, count]) => `
+                        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded">
+                            <span class="text-gray-800">${allergy}</span>
+                            <span class="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm">${count}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    allergiesList.innerHTML = '<p class="text-gray-600 text-sm">Sin alergias reportadas</p>';
+                }
+
+                // Update diets list
+                const dietsList = document.getElementById('dietsList');
+                if (data.with_special_diet.common_diets.length > 0) {
+                    dietsList.innerHTML = data.with_special_diet.common_diets.map(([diet, count]) => `
+                        <div class="flex justify-between items-center p-3 bg-purple-50 rounded">
+                            <span class="text-gray-800">${diet}</span>
+                            <span class="bg-purple-200 text-purple-800 px-3 py-1 rounded-full text-sm">${count}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    dietsList.innerHTML = '<p class="text-gray-600 text-sm">Sin dietas especiales reportadas</p>';
+                }
+            } catch (error) {
+                console.error('Error loading dietary summary:', error);
+            }
+        }
+
+        // Refresh data manually
+        async function refreshData() {
+            await loadKitchenData();
+            await loadDietarySummary();
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('arrivapp_token');
+            localStorage.removeItem('current_user');
+            window.location.href = 'login.html';
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

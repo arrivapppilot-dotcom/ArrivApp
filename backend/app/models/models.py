@@ -153,3 +153,52 @@ class Settings(Base):
     
     def __repr__(self):
         return f"<Setting {self.key}={self.value}>"
+
+
+class StudentDietaryNeeds(Base):
+    """Track dietary requirements and allergies for each student"""
+    __tablename__ = "student_dietary_needs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False, unique=True)
+    has_allergies = Column(Boolean, default=False)
+    allergies_description = Column(String, nullable=True)  # E.g., "Peanut, Gluten"
+    has_special_diet = Column(Boolean, default=False)
+    special_diet_description = Column(String, nullable=True)  # E.g., "Vegetarian, Vegan, Kosher"
+    notes = Column(String, nullable=True)  # Additional notes for kitchen
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    student = relationship("Student")
+    
+    def __repr__(self):
+        return f"<StudentDietaryNeeds for student {self.student_id}>"
+
+
+class KitchenAttendance(Base):
+    """Daily snapshot of student attendance for kitchen meal planning - captured at 10 AM"""
+    __tablename__ = "kitchen_attendance"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=False)
+    snapshot_date = Column(DateTime, nullable=False)  # Date of the snapshot (10 AM)
+    class_name = Column(String, nullable=False)  # E.g., "5A", "4B"
+    
+    # Attendance counts
+    total_students = Column(Integer, default=0)
+    present = Column(Integer, default=0)  # Students who checked in
+    absent = Column(Integer, default=0)  # Students who didn't check in (9:01 AM passed)
+    will_arrive_later = Column(Integer, default=0)  # Students we expect to arrive later (inferred)
+    
+    # Dietary tracking
+    with_allergies = Column(Integer, default=0)
+    with_special_diet = Column(Integer, default=0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    school = relationship("School")
+    
+    def __repr__(self):
+        return f"<KitchenAttendance {self.class_name} on {self.snapshot_date}>"

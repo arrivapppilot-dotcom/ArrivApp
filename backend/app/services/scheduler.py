@@ -6,8 +6,12 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, date, time
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import and_, func, Integer
 from app.core.database import SessionLocal
-from app.models.models import Student, CheckIn, User, UserRole
+from app.models.models import (
+    Student, CheckIn, User, UserRole, 
+    StudentDietaryNeeds, KitchenAttendance, AbsenceNotification, School
+)
 from app.services.email_service import send_email
 from app.core.config import get_settings
 import logging
@@ -156,6 +160,97 @@ Alumnos ausentes ({len(absent_students)}):
         db.close()
 
 
+async def capture_kitchen_attendance():
+    """Capture kitchen attendance snapshot at 10 AM - for meal planning."""
+    logger.info("Capturing kitchen attendance snapshot...")
+    
+    db = SessionLocal()
+    try:
+        today = date.today()
+        snapshot_datetime = datetime.combine(today, time(hour=10, minute=0))
+        
+        # Get all schools
+        schools = db.query(School).filter(School.is_active == True).all()
+        
+        for school in schools:
+            # Get all active students for this school
+            all_students = db.query(Student).filter(
+                and_(
+                    Student.is_active == True,
+                    Student.school_id == school.id
+                )
+            ).all()
+            
+            # Group by class
+            classes = {}
+            for student in all_students:
+                if student.class_name not in classes:
+                    classes[student.class_name] = []
+                classes[student.class_name].append(student)
+            
+            # Generate snapshot for each class
+            for class_name, students in classes.items():
+                total = len(students)
+                student_ids = [s.id for s in students]
+                
+                # Check who checked in today
+                checkins_today = db.query(CheckIn).filter(
+                    and_(
+                        CheckIn.student_id.in_(student_ids),
+                        func.date(CheckIn.checkin_time) == today
+                    )
+                ).all()
+                
+                present = len(checkins_today)
+                
+                # Check who has absence notifications (absent at 9:01 AM)
+                absences_today = db.query(AbsenceNotification).filter(
+                    and_(
+                        AbsenceNotification.student_id.in_(student_ids),
+                        func.date(AbsenceNotification.notification_date) == today
+                    )
+                ).all()
+                
+                absent = len(absences_today)
+                will_arrive = total - present - absent
+                
+                # Count dietary needs
+                dietary_counts = db.query(
+                    func.sum(func.cast(StudentDietaryNeeds.has_allergies, Integer)).label('allergies'),
+                    func.sum(func.cast(StudentDietaryNeeds.has_special_diet, Integer)).label('special_diet')
+                ).filter(
+                    StudentDietaryNeeds.student_id.in_(student_ids)
+                ).first()
+                
+                with_allergies = int(dietary_counts.allergies) if dietary_counts.allergies else 0
+                with_special_diet = int(dietary_counts.special_diet) if dietary_counts.special_diet else 0
+                
+                # Create snapshot
+                snapshot = KitchenAttendance(
+                    school_id=school.id,
+                    snapshot_date=snapshot_datetime,
+                    class_name=class_name,
+                    total_students=total,
+                    present=present,
+                    absent=absent,
+                    will_arrive_later=will_arrive,
+                    with_allergies=with_allergies,
+                    with_special_diet=with_special_diet
+                )
+                
+                db.add(snapshot)
+                logger.info(f"Created kitchen snapshot for {school.name} - {class_name}: {present}/{total} present")
+            
+        db.commit()
+        logger.info("✅ Kitchen attendance snapshot captured")
+        
+    except Exception as e:
+        logger.error(f"Error capturing kitchen attendance: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 def start_scheduler():
     """Start the scheduler with all scheduled tasks."""
     # Parse the CHECK_ABSENT_TIME setting (format: "HH:MM")
@@ -173,7 +268,17 @@ def start_scheduler():
         replace_existing=True
     )
     
+    # Schedule kitchen attendance capture at 10 AM every day
+    scheduler.add_job(
+        capture_kitchen_attendance,
+        trigger=CronTrigger(hour=10, minute=0),
+        id='capture_kitchen_attendance',
+        name='Daily kitchen attendance snapshot',
+        replace_existing=True
+    )
+    
     logger.info(f"Scheduler started. Absent check will run daily at {hour:02d}:{minute:02d}")
+    logger.info("Kitchen attendance snapshot will run daily at 10:00")
     scheduler.start()
 
 
