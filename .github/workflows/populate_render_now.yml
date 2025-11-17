@@ -1,0 +1,42 @@
+name: Populate Render DB Now
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  populate_render:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt -q
+      
+      - name: Populate Render database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          cd backend
+          python populate_render_db.py
+      
+      - name: Upload test data archive
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: render_db_population_${{ github.run_number }}
+          path: backend/test_data_archive/
+          retention-days: 30
