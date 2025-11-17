@@ -418,7 +418,7 @@
             </div>
             <div class="header-actions">
                 <span class="header-date" id="currentDate"></span>
-                <button onclick="goToDashboard()" class="btn btn-back" id="backBtn" style="display: none;">← Volver a Dashboard</button>
+                <button onclick="goToDashboard()" class="btn btn-back" id="backBtn">← Volver a Dashboard</button>
                 <button onclick="refreshData()" class="btn btn-refresh">🔄 Actualizar</button>
                 <button onclick="logout()" class="btn btn-logout">Salir</button>
             </div>
@@ -514,9 +514,18 @@
             const currentUser = JSON.parse(localStorage.getItem('current_user') || '{}');
             const backBtn = document.getElementById('backBtn');
             
+            // Get the role - handle different possible formats
+            const role = currentUser.role || currentUser.user_role || '';
+            const roleStr = String(role).toLowerCase().trim();
+            
+            console.log('Current user:', currentUser);
+            console.log('Role:', roleStr);
+            
             // Show back button for admin and director roles
-            if (currentUser.role && (currentUser.role === 'admin' || currentUser.role === 'director')) {
+            if (roleStr === 'admin' || roleStr === 'director' || roleStr === 'Admin' || roleStr === 'Director') {
                 backBtn.style.display = 'flex';
+            } else {
+                backBtn.style.display = 'none';
             }
         }
 
