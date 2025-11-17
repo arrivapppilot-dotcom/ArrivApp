@@ -196,8 +196,22 @@
                 localStorage.setItem('arrivapp_token', data.access_token);
                 localStorage.setItem('arrivapp_user', username);
 
-                // Redirect to dashboard
-                window.location.href = 'dashboard.html';
+                // Fetch user info to check role
+                const userResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${data.access_token}`
+                    }
+                });
+                
+                const userData = await userResponse.json();
+                localStorage.setItem('arrivapp_user_role', userData.role);
+                
+                // Redirect based on role
+                if (userData.role === 'comedor') {
+                    window.location.href = 'comedor.html';
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
 
             } catch (error) {
                 showError(error.message || 'Error al iniciar sesión. Por favor, verifica tus credenciales.');

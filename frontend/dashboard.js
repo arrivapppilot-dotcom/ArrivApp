@@ -26,6 +26,13 @@ if (!token) {
 async function initializeUser() {
     try {
         currentUser = await apiRequest('/api/auth/me');
+        
+        // Check if user is comedor - redirect them to comedor page
+        if (currentUser.role === 'comedor') {
+            window.location.href = 'comedor.html';
+            return;
+        }
+        
         const usernameEl = document.getElementById('userName');
         const userRoleEl = document.getElementById('userRole');
         const userInitialsEl = document.getElementById('userInitials');
