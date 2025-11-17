@@ -9,6 +9,7 @@ class UserRole(enum.Enum):
     admin = "admin"
     director = "director"
     teacher = "teacher"
+    comedor = "comedor"
 
 
 class School(Base):

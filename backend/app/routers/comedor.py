@@ -20,12 +20,12 @@ async def get_kitchen_data_today(
 ):
     """Get today's kitchen meal planning data at 10 AM snapshot"""
     
-    # Only kitchen staff (teachers/directors) can access - or admins
-    if current_user.role not in [UserRole.admin, UserRole.director, UserRole.teacher]:
+    # Only kitchen staff (comedor/teachers/directors) can access - or admins
+    if current_user.role not in [UserRole.admin, UserRole.director, UserRole.teacher, UserRole.comedor]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     # Get user's school
-    if current_user.role in [UserRole.director, UserRole.teacher]:
+    if current_user.role in [UserRole.director, UserRole.teacher, UserRole.comedor]:
         if not current_user.school_id:
             raise HTTPException(status_code=403, detail="User has no assigned school")
         school_id = current_user.school_id
@@ -91,12 +91,12 @@ async def get_kitchen_data_history(
 ):
     """Get kitchen attendance history for the last N days"""
     
-    # Only kitchen staff (teachers/directors) can access - or admins
-    if current_user.role not in [UserRole.admin, UserRole.director, UserRole.teacher]:
+    # Only kitchen staff (comedor/teachers/directors) can access - or admins
+    if current_user.role not in [UserRole.admin, UserRole.director, UserRole.teacher, UserRole.comedor]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     # Get user's school
-    if current_user.role in [UserRole.director, UserRole.teacher]:
+    if current_user.role in [UserRole.director, UserRole.teacher, UserRole.comedor]:
         if not current_user.school_id:
             raise HTTPException(status_code=403, detail="User has no assigned school")
         school_id = current_user.school_id
@@ -139,10 +139,10 @@ async def get_dietary_summary(
 ):
     """Get overall dietary requirements for the school"""
     
-    if current_user.role not in [UserRole.admin, UserRole.director, UserRole.teacher]:
+    if current_user.role not in [UserRole.admin, UserRole.director, UserRole.teacher, UserRole.comedor]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
-    if current_user.role in [UserRole.director, UserRole.teacher]:
+    if current_user.role in [UserRole.director, UserRole.teacher, UserRole.comedor]:
         if not current_user.school_id:
             raise HTTPException(status_code=403, detail="User has no assigned school")
         school_id = current_user.school_id
