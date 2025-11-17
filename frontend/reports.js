@@ -39,10 +39,23 @@ async function checkAuth() {
         currentUser = await response.json();
         document.getElementById('userInfo').textContent = `${currentUser.username} (${currentUser.role})`;
 
-        // Show school filter only for admin
+        // Show school filter for admin only
         if (currentUser.role === 'admin') {
-            document.getElementById('schoolFilterContainer').classList.remove('hidden');
+            document.getElementById('schoolFilterContainer').style.display = 'block';
             await loadSchools();
+            // Add event listener to reload classes when school changes
+            document.getElementById('schoolFilter').addEventListener('change', loadClasses);
+        }
+
+        // Show class filter for all users (director can see all classes in their school, admin can filter by class)
+        document.getElementById('classFilterContainer').style.display = 'block';
+        
+        // If director, load classes for their school immediately
+        if (currentUser.role === 'director' && currentUser.school_id) {
+            await loadClasses(currentUser.school_id);
+        } else if (currentUser.role === 'admin') {
+            // For admin, load all classes
+            await loadClasses();
         }
     } catch (error) {
         console.error('Auth error:', error);
@@ -63,6 +76,10 @@ async function loadSchools() {
         if (response.ok) {
             const schools = await response.json();
             const select = document.getElementById('schoolFilter');
+            // Clear existing options except the first one
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
             schools.forEach(school => {
                 const option = document.createElement('option');
                 option.value = school.id;
@@ -72,6 +89,59 @@ async function loadSchools() {
         }
     } catch (error) {
         console.error('Error loading schools:', error);
+    }
+}
+
+async function loadClasses(event) {
+    const token = localStorage.getItem('arrivapp_token');
+    try {
+        // Get school_id from event (if fired from school filter change) or from parameter or current selection
+        let school_id = null;
+        
+        if (event && typeof event === 'object' && event.target) {
+            // Event from school filter change
+            school_id = event.target.value ? parseInt(event.target.value) : null;
+        } else if (typeof event === 'number') {
+            // Direct school_id passed
+            school_id = event;
+        } else if (currentUser.role === 'director') {
+            // Director - use their assigned school
+            school_id = currentUser.school_id;
+        }
+
+        // Build query string
+        let url = `${API_URL}/students?is_active=true`;
+        if (school_id && school_id > 0) {
+            url += `&school_id=${school_id}`;
+        }
+
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const students = await response.json();
+            
+            // Extract unique class names
+            const classNames = [...new Set(students.map(s => s.class_name))].filter(c => c).sort();
+            
+            const select = document.getElementById('classFilter');
+            // Clear existing options except the first one
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            
+            classNames.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading classes:', error);
     }
 }
 
@@ -114,10 +184,19 @@ async function generateReport() {
     const reportType = document.getElementById('reportType').value;
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
-    const rawSchoolValue = document.getElementById('schoolFilter')?.value;
-    const schoolId = rawSchoolValue && rawSchoolValue !== '' ? parseInt(rawSchoolValue) : null;
-
-    console.log('generateReport - School Filter:', { rawSchoolValue, schoolId, type: typeof schoolId });
+    
+    // Get school filter value (only for admin, director uses their assigned school)
+    let schoolId = null;
+    if (currentUser.role === 'admin') {
+        const rawSchoolValue = document.getElementById('schoolFilter')?.value;
+        schoolId = rawSchoolValue && rawSchoolValue !== '' ? parseInt(rawSchoolValue) : null;
+    } else if (currentUser.role === 'director') {
+        schoolId = currentUser.school_id;
+    }
+    
+    // Get class filter value
+    const classFilter = document.getElementById('classFilter')?.value;
+    const className = classFilter && classFilter !== '' ? classFilter : null;
 
     if (!startDate || !endDate) {
         alert('Por favor selecciona un rango de fechas');
@@ -132,13 +211,13 @@ async function generateReport() {
 
     try {
         if (reportType === 'statistics') {
-            await generateStatistics(startDate, endDate, schoolId);
+            await generateStatistics(startDate, endDate, schoolId, className);
         } else if (reportType === 'history') {
-            await generateHistory(startDate, endDate, schoolId);
+            await generateHistory(startDate, endDate, schoolId, className);
         } else if (reportType === 'tardiness') {
-            await generateTardinessAnalysis(startDate, endDate, schoolId);
+            await generateTardinessAnalysis(startDate, endDate, schoolId, className);
         } else if (reportType === 'analytics') {
-            await generateHistoricalAnalytics(startDate, endDate, schoolId);
+            await generateHistoricalAnalytics(startDate, endDate, schoolId, className);
         }
     } catch (error) {
         console.error('Error generating report:', error);
@@ -148,14 +227,15 @@ async function generateReport() {
     }
 }
 
-async function generateStatistics(startDate, endDate, schoolId) {
+async function generateStatistics(startDate, endDate, schoolId, className) {
     const token = localStorage.getItem('arrivapp_token');
     let url = `${API_URL}/reports/statistics?period=monthly&start_date=${startDate}&end_date=${endDate}`;
     if (schoolId) {
         url += `&school_id=${schoolId}`;
     }
-
-    console.log('generateStatistics - URL:', url, '- schoolId:', schoolId);
+    if (className) {
+        url += `&class_name=${encodeURIComponent(className)}`;
+    }
 
     const response = await fetch(url, {
         headers: {
@@ -203,24 +283,22 @@ async function generateStatistics(startDate, endDate, schoolId) {
     createAttendanceDistChart(data);
 }
 
-async function generateHistory(startDate, endDate, schoolId) {
+async function generateHistory(startDate, endDate, schoolId, className) {
     try {
-        console.log('generateHistory called with:', { startDate, endDate, schoolId });
         const token = localStorage.getItem('arrivapp_token');
         let url = `${API_URL}/reports/attendance-history?start_date=${startDate}&end_date=${endDate}`;
         if (schoolId) {
             url += `&school_id=${schoolId}`;
         }
-
-        console.log('Fetching from URL:', url);
+        if (className) {
+            url += `&class_name=${encodeURIComponent(className)}`;
+        }
 
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-
-        console.log('Response status:', response.status);
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -268,11 +346,14 @@ async function generateHistory(startDate, endDate, schoolId) {
     }
 }
 
-async function generateTardinessAnalysis(startDate, endDate, schoolId) {
+async function generateTardinessAnalysis(startDate, endDate, schoolId, className) {
     const token = localStorage.getItem('arrivapp_token');
     let url = `${API_URL}/reports/tardiness-analysis?start_date=${startDate}&end_date=${endDate}`;
     if (schoolId) {
         url += `&school_id=${schoolId}`;
+    }
+    if (className) {
+        url += `&class_name=${encodeURIComponent(className)}`;
     }
 
     const response = await fetch(url, {
@@ -449,15 +530,16 @@ function createWeeklyTrendsChart(weeklyData) {
     });
 }
 
-async function generateHistoricalAnalytics(startDate, endDate, schoolId) {
+async function generateHistoricalAnalytics(startDate, endDate, schoolId, className) {
     try {
         const token = localStorage.getItem('arrivapp_token');
         let url = `${API_URL}/reports/historical-analytics?start_date=${startDate}&end_date=${endDate}`;
         if (schoolId) {
             url += `&school_id=${schoolId}`;
         }
-
-        console.log('Fetching historical analytics from:', url);
+        if (className) {
+            url += `&class_name=${encodeURIComponent(className)}`;
+        }
         
         const response = await fetch(url, {
             headers: {
@@ -472,7 +554,6 @@ async function generateHistoricalAnalytics(startDate, endDate, schoolId) {
         }
 
         const data = await response.json();
-        console.log('Historical analytics data:', data);
 
         // Update summary metrics
         document.getElementById('avgMonthlyAttendance').textContent = data.avg_monthly_attendance.toFixed(1);

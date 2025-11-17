@@ -22,6 +22,7 @@ async def get_attendance_history(
     end_date: Optional[str] = Query(None),
     school_id: Optional[int] = Query(None),
     student_id: Optional[int] = Query(None),
+    class_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -41,6 +42,10 @@ async def get_attendance_history(
     # Admin can filter by school
     if school_id and current_user.role == UserRole.admin:
         query = query.filter(Student.school_id == school_id)
+    
+    # Filter by class
+    if class_name:
+        query = query.filter(Student.class_name == class_name)
     
     # Filter by student
     if student_id:
@@ -84,6 +89,7 @@ async def get_attendance_with_absences(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     school_id: Optional[int] = Query(None),
+    class_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -115,6 +121,10 @@ async def get_attendance_with_absences(
     # Admin can filter by school
     if school_id and current_user.role == UserRole.admin:
         student_query = student_query.filter(Student.school_id == school_id)
+    
+    # Filter by class
+    if class_name:
+        student_query = student_query.filter(Student.class_name == class_name)
     
     # Get all active students in scope
     all_students = student_query.filter(Student.is_active == True).all()
@@ -189,6 +199,7 @@ async def get_statistics(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     school_id: Optional[int] = Query(None),
+    class_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -221,6 +232,10 @@ async def get_statistics(
     # Admin can filter by school
     if school_id and current_user.role == UserRole.admin:
         query = query.filter(Student.school_id == school_id)
+    
+    # Filter by class
+    if class_name:
+        query = query.filter(Student.class_name == class_name)
     
     # Filter by date range
     query = query.filter(
@@ -299,6 +314,7 @@ async def get_tardiness_analysis(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     school_id: Optional[int] = Query(None),
+    class_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -331,6 +347,9 @@ async def get_tardiness_analysis(
     
     if school_id and current_user.role == UserRole.admin:
         query = query.filter(Student.school_id == school_id)
+    
+    if class_name:
+        query = query.filter(Student.class_name == class_name)
     
     query = query.filter(
         and_(
@@ -635,6 +654,7 @@ async def get_historical_analytics(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     school_id: Optional[int] = Query(None),
+    class_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -666,6 +686,9 @@ async def get_historical_analytics(
     if school_id and current_user.role == UserRole.admin:
         base_query = base_query.filter(Student.school_id == school_id)
     
+    if class_name:
+        base_query = base_query.filter(Student.class_name == class_name)
+    
     # Filter by date range
     base_query = base_query.filter(
         CheckIn.checkin_time >= start,
@@ -693,6 +716,9 @@ async def get_historical_analytics(
             month_checkins = month_checkins.filter(Student.school_id == current_user.school_id)
         elif school_id and current_user.role == UserRole.admin:
             month_checkins = month_checkins.filter(Student.school_id == school_id)
+        
+        if class_name:
+            month_checkins = month_checkins.filter(Student.class_name == class_name)
         
         total = month_checkins.count()
         late = month_checkins.filter(CheckIn.is_late == True).count()
@@ -753,6 +779,9 @@ async def get_historical_analytics(
         students_query = students_query.filter(Student.school_id == current_user.school_id)
     elif school_id and current_user.role == UserRole.admin:
         students_query = students_query.filter(Student.school_id == school_id)
+    
+    if class_name:
+        students_query = students_query.filter(Student.class_name == class_name)
     
     chronic_absentees = []
     total_days = (end - start).days
