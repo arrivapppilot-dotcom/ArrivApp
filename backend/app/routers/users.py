@@ -211,6 +211,57 @@ async def reset_user_password(
     return {"message": "Password reset successfully"}
 
 
+@router.post("/create-comedor", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def create_comedor_user(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Create a comedor (kitchen manager) user (admin only)."""
+    school_id = data.get("school_id")
+    password = data.get("password", "kitchen2025")
+    
+    if not school_id:
+        raise HTTPException(status_code=400, detail="school_id is required")
+    
+    if not password or len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Check if school exists
+    school = db.query(School).filter(School.id == school_id).first()
+    if not school:
+        raise HTTPException(status_code=400, detail="School not found")
+    
+    # Check if comedor user already exists
+    existing = db.query(User).filter(User.username == "comedor").first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Comedor user already exists")
+    
+    # Create comedor user
+    comedor_user = User(
+        email="comedor@example.com",
+        username="comedor",
+        full_name="Kitchen Manager",
+        hashed_password=get_password_hash(password),
+        role=UserRole.comedor,
+        school_id=school_id,
+        is_active=True,
+        is_admin=False
+    )
+    
+    db.add(comedor_user)
+    db.commit()
+    db.refresh(comedor_user)
+    
+    return {
+        "message": "Comedor user created successfully",
+        "username": "comedor",
+        "password": password,
+        "email": "comedor@example.com",
+        "school": school.name
+    }
+
+
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: int,

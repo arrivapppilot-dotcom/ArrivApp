@@ -134,7 +134,8 @@ function getRoleBadge(role) {
     const badges = {
         'admin': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">👑 Admin</span>',
         'director': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800"> Director</span>',
-        'teacher': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800"> Profesor</span>'
+        'teacher': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800"> Profesor</span>',
+        'comedor': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800">🍽️ Comedor</span>'
     };
     return badges[role] || role;
 }
@@ -289,15 +290,83 @@ function closeModal() {
     editingUserId = null;
 }
 
+// Create Comedor User
+async function createComedorUser() {
+    const schoolId = document.getElementById('comedorSchool').value;
+    const password = document.getElementById('comedorPassword').value;
+    
+    if (!schoolId) {
+        alert('Por favor, selecciona un colegio');
+        return;
+    }
+    
+    if (!password || password.length < 6) {
+        alert('La contraseña debe tener al menos 6 caracteres');
+        return;
+    }
+    
+    try {
+        const response = await apiRequest('/api/users/create-comedor', {
+            method: 'POST',
+            body: JSON.stringify({
+                school_id: parseInt(schoolId),
+                password: password
+            })
+        });
+        
+        alert('✅ Usuario Comedor creado exitosamente!\nUsuario: comedor\nContraseña: ' + password);
+        closeComedorModal();
+        loadUsers();
+    } catch (error) {
+        alert('Error al crear usuario comedor: ' + error.message);
+    }
+}
+
+// Show Comedor Modal
+function showComedorModal() {
+    document.getElementById('comedorForm').reset();
+    document.getElementById('comedorPassword').value = 'kitchen2025';
+    
+    // Populate schools
+    const schoolSelect = document.getElementById('comedorSchool');
+    schoolSelect.innerHTML = '<option value="">Seleccionar colegio...</option>';
+    schools.forEach(school => {
+        const option = document.createElement('option');
+        option.value = school.id;
+        option.textContent = school.name;
+        schoolSelect.appendChild(option);
+    });
+    
+    document.getElementById('comedorModal').style.display = 'flex';
+}
+
+// Close Comedor Modal
+function closeComedorModal() {
+    document.getElementById('comedorModal').style.display = 'none';
+}
+
 // Event listeners
 document.getElementById('addUserBtn').addEventListener('click', showAddUserModal);
+document.getElementById('addComedorBtn').addEventListener('click', showComedorModal);
 document.getElementById('cancelBtn').addEventListener('click', closeModal);
+document.getElementById('cancelComedorBtn').addEventListener('click', closeComedorModal);
+document.getElementById('comedorForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    createComedorUser();
+});
 document.getElementById('role').addEventListener('change', updateSchoolRequirement);
 
 // Close modal when clicking outside
 document.getElementById('userModal').addEventListener('click', (e) => {
     if (e.target.id === 'userModal') {
         closeModal();
+    }
+});
+
+// Close comedor modal when clicking outside
+document.getElementById('comedorModal').addEventListener('click', (e) => {
+    if (e.target.id === 'comedorModal') {
+        closeComedorModal();
     }
 });
 

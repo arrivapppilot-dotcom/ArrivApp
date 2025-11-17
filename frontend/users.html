@@ -67,9 +67,14 @@
             <div class="text-sm text-gray-600">
                 Total: <span id="userCount" class="font-bold">0</span> usuarios
             </div>
-            <button id="addUserBtn" class="text-white px-6 py-2 rounded-lg transition font-semibold" style="background-color: #10b981;">
-                ➕ Añadir Usuario
-            </button>
+            <div class="flex gap-3">
+                <button id="addComedorBtn" class="text-white px-6 py-2 rounded-lg transition font-semibold" style="background-color: #f97316;">
+                    🍽️ Crear Comedor
+                </button>
+                <button id="addUserBtn" class="text-white px-6 py-2 rounded-lg transition font-semibold" style="background-color: #10b981;">
+                    ➕ Añadir Usuario
+                </button>
+            </div>
         </div>
 
         <!-- Users Table -->
@@ -148,6 +153,47 @@
                     </button>
                     <button type="submit" class="text-white px-4 py-2 rounded-lg font-semibold" style="background-color: #10b981;">
                         Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Comedor User Modal -->
+    <div id="comedorModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3>🍽️ Crear Usuario Comedor</h3>
+            <p style="color: #6b7280; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                Los usuarios comedor solo pueden acceder a la página /comedor para gestión de cocina.
+            </p>
+            <form id="comedorForm">
+                <div class="form-group">
+                    <label for="comedorSchool">Colegio *</label>
+                    <select id="comedorSchool" required>
+                        <option value="">Seleccionar colegio...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="comedorPassword">Contraseña *</label>
+                    <input type="password" id="comedorPassword" required placeholder="mínimo 6 caracteres" value="kitchen2025">
+                    <small class="text-gray-500">Se puede cambiar después desde el perfil del usuario</small>
+                </div>
+
+                <div class="form-group" style="background: #fffbeb; padding: 1rem; border-radius: 6px; border-left: 4px solid #f59e0b;">
+                    <p style="font-size: 0.875rem; color: #92400e;">
+                        <strong>Usuario:</strong> comedor<br>
+                        <strong>Email:</strong> comedor@example.com<br>
+                        <strong>Acceso:</strong> Solo /comedor (cocina)
+                    </p>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" id="cancelComedorBtn" class="btn-secondary px-4 py-2 rounded-lg font-semibold text-gray-800 border-2 border-gray-300" style="background-color: #f3f4f6;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="text-white px-4 py-2 rounded-lg font-semibold" style="background-color: #f97316;">
+                        Crear Comedor
                     </button>
                 </div>
             </form>
