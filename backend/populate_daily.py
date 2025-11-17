@@ -89,7 +89,10 @@ class TestDataManager:
                 last_name = fake.last_name()
                 full_name = f"{first_name} {last_name}"
                 class_name = random.choice(CLASSES)
-                parent_email = f"{first_name.lower()}.{last_name.lower()}.daily{datetime.now().strftime('%Y%m%d')}@example.com"
+                # Remove spaces and special characters from names for email
+                safe_first = first_name.replace(" ", "").replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+                safe_last = last_name.replace(" ", "").replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+                parent_email = f"{safe_first.lower()}.{safe_last.lower()}.daily{datetime.now().strftime('%Y%m%d')}@example.com"
                 student_id = f"TEST{datetime.now().strftime('%Y%m%d')}{school.id}{random.randint(1000, 9999)}"
                 
                 student = Student(
