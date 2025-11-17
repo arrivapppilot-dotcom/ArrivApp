@@ -90,6 +90,23 @@ class CheckIn(Base):
         return f"<CheckIn {self.student_id} at {self.checkin_time}>"
 
 
+class AbsenceNotification(Base):
+    __tablename__ = "absence_notifications"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
+    notification_date = Column(DateTime, default=datetime.utcnow, nullable=False)  # The date of absence
+    email_sent = Column(Boolean, default=False)
+    email_sent_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    student = relationship("Student")
+    
+    def __repr__(self):
+        return f"<AbsenceNotification for student {self.student_id} on {self.notification_date}>"
+
+
 class JustificationType(enum.Enum):
     absence = "absence"  # Full day absence
     tardiness = "tardiness"  # Late arrival

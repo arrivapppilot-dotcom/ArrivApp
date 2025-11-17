@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-11-17T10:58:32.346607",
+  "test_data_summary": {
+    "students_created": 90,
+    "checkins_today": 807,
+    "justifications_today": 0,
+    "late_arrivals": 160,
+    "emails_sent": 136
+  },
+  "schools_tested": 9,
+  "test_results": {
+    "students_exist": true,
+    "checkins_exist": true,
+    "justifications_exist": true,
+    "today_checkins_calculable": true,
+    "late_arrivals_calculable": true,
+    "absence_justifications_calculable": true
+  },
+  "errors": [],
+  "warnings": []
+}

@@ -4,7 +4,7 @@ from sqlalchemy import func, and_, or_, Integer, extract
 from typing import Optional, List
 from datetime import datetime, date, timedelta
 from app.core.database import get_db
-from app.models.models import CheckIn, Student, School, User, UserRole
+from app.models.models import CheckIn, Student, School, User, UserRole, AbsenceNotification
 from app.core.deps import get_current_user
 import io
 from reportlab.lib.pagesizes import letter, A4
@@ -74,6 +74,110 @@ async def get_attendance_history(
             "checkout_time": record.checkout_time.isoformat() if record.checkout_time else None,
             "is_late": record.is_late,
             "email_sent": record.email_sent
+        })
+    
+    return {"records": result, "total": len(result)}
+
+
+@router.get("/attendance-with-absences")
+async def get_attendance_with_absences(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    school_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get attendance history including absent students with notification status"""
+    
+    # Parse dates
+    if start_date:
+        date_obj = datetime.strptime(start_date, "%Y-%m-%d")
+        start_datetime = date_obj.replace(hour=0, minute=0, second=0)
+    else:
+        start_datetime = datetime.now().replace(hour=0, minute=0, second=0)
+    
+    if end_date:
+        date_obj = datetime.strptime(end_date, "%Y-%m-%d")
+        end_datetime = date_obj.replace(hour=23, minute=59, second=59)
+    else:
+        end_datetime = datetime.now().replace(hour=23, minute=59, second=59)
+    
+    # Build student query for authorization
+    student_query = db.query(Student)
+    
+    if current_user.role in [UserRole.director, UserRole.teacher]:
+        if not current_user.school_id:
+            raise HTTPException(status_code=403, detail="User has no assigned school")
+        student_query = student_query.filter(Student.school_id == current_user.school_id)
+    elif current_user.role != UserRole.admin:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    # Admin can filter by school
+    if school_id and current_user.role == UserRole.admin:
+        student_query = student_query.filter(Student.school_id == school_id)
+    
+    # Get all active students in scope
+    all_students = student_query.filter(Student.is_active == True).all()
+    
+    # Get all checked-in students for the date range
+    checkins = db.query(CheckIn).join(Student).filter(
+        and_(
+            CheckIn.checkin_time >= start_datetime,
+            CheckIn.checkin_time <= end_datetime
+        )
+    )
+    
+    if current_user.role in [UserRole.director, UserRole.teacher]:
+        checkins = checkins.filter(Student.school_id == current_user.school_id)
+    elif school_id and current_user.role == UserRole.admin:
+        checkins = checkins.filter(Student.school_id == school_id)
+    
+    checkins = checkins.all()
+    checkin_student_ids = set(c.student_id for c in checkins)
+    
+    # Format checked-in records
+    result = []
+    for record in checkins:
+        student = record.student
+        result.append({
+            "id": record.id,
+            "student_id": student.id,
+            "student_name": student.name,
+            "class_name": student.class_name,
+            "school_id": student.school_id,
+            "school_name": student.school.name if student.school else None,
+            "checkin_time": record.checkin_time.isoformat(),
+            "checkout_time": record.checkout_time.isoformat() if record.checkout_time else None,
+            "is_late": record.is_late,
+            "email_sent": record.email_sent,
+            "is_absent": False
+        })
+    
+    # Add absent students (those not in check-ins for the date)
+    absent_students = [s for s in all_students if s.id not in checkin_student_ids]
+    
+    for student in absent_students:
+        # Check if there's an absence notification for this student on this date
+        absence_notif = db.query(AbsenceNotification).filter(
+            and_(
+                AbsenceNotification.student_id == student.id,
+                AbsenceNotification.notification_date >= start_datetime,
+                AbsenceNotification.notification_date <= end_datetime
+            )
+        ).first()
+        
+        result.append({
+            "id": None,
+            "student_id": student.id,
+            "student_name": student.name,
+            "class_name": student.class_name,
+            "school_id": student.school_id,
+            "school_name": student.school.name if student.school else None,
+            "checkin_time": None,
+            "checkout_time": None,
+            "is_late": False,
+            "email_sent": absence_notif.email_sent if absence_notif else False,
+            "is_absent": True
         })
     
     return {"records": result, "total": len(result)}

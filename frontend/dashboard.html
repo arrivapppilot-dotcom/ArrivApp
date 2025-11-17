@@ -239,6 +239,16 @@
                 </table>
             </div>
         </div>
+
+        <div class="section">
+            <div class="section-title">❌ Alumnos Ausentes</div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Alumno</th><th>Clase</th><th>Colegio</th><th>Email Padres</th><th>Estado</th></tr></thead>
+                    <tbody id="absentStudentsTable"><tr><td colspan="5" style="text-align: center; color: #6b7280;">Cargando...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -453,23 +463,8 @@
             const today = document.getElementById('dateFilter').value || new Date().toISOString().split('T')[0];
             
             try {
-                // Fetch all students
-                const studentsResponse = await fetch(`${API_URL}/students/`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (!studentsResponse.ok) {
-                    console.error('Failed to load students:', studentsResponse.status);
-                    showAllTablesNoData();
-                    return;
-                }
-                
-                const students = await studentsResponse.json();
-                console.log(`Loaded ${students.length} students`);
-                console.log(`Date filter value: ${today}`);
-                
-                // Fetch attendance records for today
-                const url = new URL(`${API_URL}/reports/attendance-history`, window.location.origin);
+                // Fetch attendance with absences (includes both checked-in and absent students)
+                const url = new URL(`${API_URL}/reports/attendance-with-absences`, window.location.origin);
                 url.searchParams.append('start_date', today);
                 url.searchParams.append('end_date', today);
                 
@@ -482,27 +477,24 @@
                     const records = data.records || [];
                     
                     console.log(`Loaded ${records.length} attendance records for ${today}`);
-                    console.log('Sample record:', records[0]);
                     
-                    // Create a set of student IDs who have checked in
-                    const checkedInIds = new Set(records.map(r => r.student_id));
-                    console.log(`Checked-in student IDs: ${checkedInIds.size}`);
-                    
-                    // Find unregistered students (not in check-ins)
-                    const unregistered = students.filter(s => !checkedInIds.has(s.id)).map(s => ({
-                        alumno: s.name,
-                        clase: s.class_name || '-',
-                        colegio: s.school ? s.school.name : '-',
-                        email: s.parent_email || '-'
-                    }));
-                    console.log(`Unregistered students: ${unregistered.length}`);
-                    
-                    // Organize check-in records by type
+                    // Organize records by type
                     const late = [];
                     const present = [];
+                    const absent = [];
                     
                     records.forEach(record => {
-                        if (record.is_late) {
+                        if (record.is_absent) {
+                            // Absent student
+                            absent.push({
+                                alumno: record.student_name,
+                                clase: record.class_name || '-',
+                                colegio: record.school_name || '-',
+                                email_padres: record.email_sent ? '✓ Enviado' : '✗ No enviado',
+                                estado: 'Ausente'
+                            });
+                        } else if (record.is_late) {
+                            // Late arrival
                             late.push({
                                 alumno: record.student_name,
                                 hora_llegada: new Date(record.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
@@ -511,6 +503,7 @@
                                 justificante: record.email_sent ? '✓ Sí' : '-'
                             });
                         } else {
+                            // Present on time
                             present.push({
                                 alumno: record.student_name,
                                 hora_entrada: new Date(record.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
@@ -521,13 +514,14 @@
                         }
                     });
                     
-                    console.log(`Unregistered: ${unregistered.length}, Late: ${late.length}, Present: ${present.length}`);
+                    console.log(`Late: ${late.length}, Present: ${present.length}, Absent: ${absent.length}`);
                     
                     // Update tables
                     updateTableUI('justifiedStudentsTable', [], 4);
-                    updateTableUI('unregisteredStudentsTable', unregistered, 4);
+                    updateTableUI('unregisteredStudentsTable', [], 4);
                     updateTableUI('lateArrivalsTable', late, 5);
                     updateTableUI('presentStudentsTable', present, 5);
+                    updateTableUI('absentStudentsTable', absent, 5);
                 } else {
                     console.error('Failed to load attendance records:', response.status);
                     showAllTablesNoData();
@@ -564,6 +558,7 @@
             showNoData('unregisteredStudentsTable', 4);
             showNoData('lateArrivalsTable', 5);
             showNoData('presentStudentsTable', 5);
+            showNoData('absentStudentsTable', 5);
         }
 
         function logout() {
