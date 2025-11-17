@@ -22,7 +22,7 @@ from faker import Faker
 from app.core.database import SessionLocal, engine
 from app.models.models import (
     Student, School, CheckIn, Justification, 
-    JustificationType, JustificationStatus
+    JustificationType, JustificationStatus, User, UserRole
 )
 
 fake = Faker(['es_ES', 'es_MX'])
@@ -372,6 +372,253 @@ class TestDataManager:
             self.log_error(f"Failed to archive test data: {str(e)}")
             return ""
     
+    
+    def send_personalized_school_reports(self) -> bool:
+        """Send personalized reports to school directors and admin"""
+        print("\n📧 Sending personalized school reports...")
+        
+        # Email configuration from environment
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        sender_email = os.getenv("SMTP_USERNAME", "")
+        sender_password = os.getenv("SMTP_PASSWORD", "")
+        
+        if not all([sender_email, sender_password]):
+            self.log_warning("Email credentials not configured - skipping personalized reports")
+            return False
+        
+        try:
+            today = datetime.now().date()
+            
+            # Get all admin and director users with emails
+            users = self.db.query(User).filter(
+                User.is_active == True,
+                User.role.in_([UserRole.admin, UserRole.director])
+            ).all()
+            
+            if not users:
+                self.log_warning("No admin or director users found for email reports")
+                return False
+            
+            emails_sent = 0
+            
+            for user in users:
+                try:
+                    # Skip if user has no email
+                    if not user.email:
+                        continue
+                    
+                    # Get statistics for user's school (or all schools if admin)
+                    if user.role == UserRole.admin:
+                        # Admin gets full system report
+                        report_type = "System-Wide"
+                        schools_data = self._get_all_schools_report(today)
+                        recipient_email = user.email
+                    else:
+                        # Director gets school-specific report
+                        if not user.school_id:
+                            continue
+                        report_type = "School"
+                        schools_data = self._get_school_report(user.school_id, today)
+                        recipient_email = user.email
+                    
+                    # Build email
+                    subject = f"📊 {report_type} Attendance Report - {today.strftime('%Y-%m-%d')}"
+                    body = self._build_school_report_html(user, report_type, schools_data)
+                    
+                    # Send email
+                    msg = MIMEMultipart('alternative')
+                    msg['Subject'] = subject
+                    msg['From'] = sender_email
+                    msg['To'] = recipient_email
+                    msg.attach(MIMEText(body, 'html'))
+                    
+                    with smtplib.SMTP(smtp_server, smtp_port) as server:
+                        server.starttls()
+                        server.login(sender_email, sender_password)
+                        server.send_message(msg)
+                    
+                    self.log_success(f"Report sent to {user.full_name} ({user.email})")
+                    emails_sent += 1
+                
+                except Exception as e:
+                    self.log_warning(f"Failed to send email to {user.email}: {str(e)}")
+            
+            if emails_sent > 0:
+                self.log_success(f"Sent {emails_sent} personalized school reports")
+            
+            return True
+        
+        except Exception as e:
+            self.log_error(f"Failed to send personalized reports: {str(e)}")
+            return False
+    
+    def _get_all_schools_report(self, date: datetime.date) -> List[Dict]:
+        """Get attendance report for all schools (admin view)"""
+        schools = self.db.query(School).all()
+        schools_data = []
+        
+        for school in schools:
+            students = self.db.query(Student).filter(Student.school_id == school.id).count()
+            
+            today_start = datetime.combine(date, datetime.min.time())
+            today_end = datetime.combine(date, datetime.max.time())
+            
+            checkins = self.db.query(CheckIn).join(Student).filter(
+                Student.school_id == school.id,
+                CheckIn.checkin_time >= today_start,
+                CheckIn.checkin_time <= today_end
+            ).all()
+            
+            late = sum(1 for c in checkins if c.is_late)
+            absent = students - len(checkins)
+            
+            justifications = self.db.query(Justification).join(Student).filter(
+                Student.school_id == school.id,
+                Justification.date == date
+            ).count()
+            
+            schools_data.append({
+                "name": school.name,
+                "total_students": students,
+                "present": len(checkins),
+                "late": late,
+                "on_time": len(checkins) - late,
+                "absent": absent,
+                "justified": justifications,
+                "attendance_rate": round((len(checkins) / students * 100) if students > 0 else 0),
+                "punctuality_rate": round(((len(checkins) - late) / len(checkins) * 100) if len(checkins) > 0 else 0)
+            })
+        
+        return schools_data
+    
+    def _get_school_report(self, school_id: int, date: datetime.date) -> List[Dict]:
+        """Get attendance report for specific school (director view)"""
+        school = self.db.query(School).filter(School.id == school_id).first()
+        
+        if not school:
+            return []
+        
+        students = self.db.query(Student).filter(Student.school_id == school_id).count()
+        
+        today_start = datetime.combine(date, datetime.min.time())
+        today_end = datetime.combine(date, datetime.max.time())
+        
+        checkins = self.db.query(CheckIn).join(Student).filter(
+            Student.school_id == school_id,
+            CheckIn.checkin_time >= today_start,
+            CheckIn.checkin_time <= today_end
+        ).all()
+        
+        late = sum(1 for c in checkins if c.is_late)
+        absent = students - len(checkins)
+        
+        justifications = self.db.query(Justification).join(Student).filter(
+            Student.school_id == school_id,
+            Justification.date == date
+        ).count()
+        
+        return [{
+            "name": school.name,
+            "total_students": students,
+            "present": len(checkins),
+            "late": late,
+            "on_time": len(checkins) - late,
+            "absent": absent,
+            "justified": justifications,
+            "attendance_rate": round((len(checkins) / students * 100) if students > 0 else 0),
+            "punctuality_rate": round(((len(checkins) - late) / len(checkins) * 100) if len(checkins) > 0 else 0)
+        }]
+    
+    def _build_school_report_html(self, user: User, report_type: str, schools_data: List[Dict]) -> str:
+        """Build HTML report for schools"""
+        today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        schools_html = ""
+        total_students = 0
+        total_present = 0
+        total_late = 0
+        total_justified = 0
+        
+        for school in schools_data:
+            total_students += school["total_students"]
+            total_present += school["present"]
+            total_late += school["late"]
+            total_justified += school["justified"]
+            
+            schools_html += f"""
+    <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px;">
+      <h4 style="color: #1f2937; margin-top: 0;">{school['name']}</h4>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr style="background: #f3f4f6;">
+          <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Total Students</strong></td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;"><strong>{school['total_students']}</strong></td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">Present</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center; color: green;"><strong>{school['present']}</strong></td>
+        </tr>
+        <tr style="background: #f9fafb;">
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">On Time</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">{school['on_time']}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">Late Arrivals</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center; color: orange;"><strong>{school['late']}</strong></td>
+        </tr>
+        <tr style="background: #f9fafb;">
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">Absent</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center; color: #d97706;"><strong>{school['absent']}</strong></td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">Justified Absences</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center; color: green;"><strong>{school['justified']}</strong></td>
+        </tr>
+        <tr style="background: #f3f4f6;">
+          <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Attendance Rate</strong></td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;"><strong>{school['attendance_rate']}%</strong></td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Punctuality Rate</strong></td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;"><strong>{school['punctuality_rate']}%</strong></td>
+        </tr>
+      </table>
+    </div>
+"""
+        
+        html = f"""
+<html>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+      <h2 style="margin: 0;">📊 {report_type} Attendance Report</h2>
+      <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.9;">Generated on {today}</p>
+    </div>
+    
+    <div style="background: white; padding: 20px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <p><strong>Hello {user.full_name},</strong></p>
+      <p>Here is your daily attendance report for today:</p>
+      
+      {schools_html}
+      
+      <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-top: 20px;">
+        <h4 style="margin-top: 0; color: #1f2937;">Summary</h4>
+        <ul style="margin: 0; padding-left: 20px;">
+          <li><strong>Total Students:</strong> {total_students}</li>
+          <li><strong>Total Present:</strong> {total_present}</li>
+          <li><strong>Total Late:</strong> {total_late}</li>
+          <li><strong>Total Justified:</strong> {total_justified}</li>
+        </ul>
+      </div>
+      
+      <p style="color: #666; font-size: 0.85em; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 15px;">
+        This is an automated daily report. For more details, visit the ArrivApp dashboard.
+      </p>
+    </div>
+  </body>
+</html>
+"""
+        return html
+    
     def send_report_email(self, archive_file: str) -> bool:
         """Send daily test report via email"""
         print("\n📧 Sending test report email...")
@@ -489,7 +736,10 @@ class TestDataManager:
             # Step 5: Archive test data
             archive_file = self.archive_test_data()
             
-            # Step 6: Send email report
+            # Step 6: Send personalized school reports
+            self.send_personalized_school_reports()
+            
+            # Step 7: Send system admin email report
             self.send_report_email(archive_file)
             
             self.results["status"] = "completed"
