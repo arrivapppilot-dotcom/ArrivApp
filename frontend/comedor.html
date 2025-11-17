@@ -4,135 +4,137 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArrivApp - Planificador de Comedor</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .header { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 1rem; }
+        .logo h1 { font-size: 1.5rem; color: #1f2937; }
+        .logo p { font-size: 0.875rem; color: #6b7280; }
+        .buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+        .btn { padding: 0.5rem 1rem; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 0.875rem; transition: all 0.3s; }
+        .btn-refresh { background: #4f46e5; color: white; }
+        .btn-refresh:hover { background: #4338ca; }
+        .btn-logout { background: #dc2626; color: white; }
+        .btn-logout:hover { background: #b91c1c; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+        .section { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .section-title { font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
+        .stat-label { font-size: 0.875rem; opacity: 0.9; }
+        .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+        .class-card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; }
+        .class-card-title { font-size: 1rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; }
+        .class-card-stat { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.875rem; }
+        .class-card-label { color: #6b7280; }
+        .class-card-value { font-weight: 600; color: #1f2937; }
+        .progress-bar { width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; margin: 1rem 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 4px; }
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .dietary-item { display: flex; justify-content: space-between; padding: 0.5rem; background: #f3f4f6; border-radius: 6px; margin-bottom: 0.5rem; }
+        .dietary-label { font-size: 0.875rem; color: #1f2937; }
+        .dietary-count { background: #e5e7eb; padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: 600; font-size: 0.875rem; }
+        .last-update { text-align: center; color: #6b7280; font-size: 0.875rem; padding: 1rem 0; }
+        #loadingSpinner { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; }
+        #loadingSpinner.show { display: flex; }
+        .spinner { background: white; padding: 2rem; border-radius: 8px; text-align: center; }
+        .spinner-circle { display: inline-block; width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-blue-600">🍽️ ArrivApp Comedor</h1>
-                    <span class="ml-4 text-gray-600">Planificador de Comidas</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span id="currentDate" class="text-sm text-gray-600"></span>
-                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
-                        Cerrar Sesión
-                    </button>
-                </div>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>🍽️ ArrivApp Comedor</h1>
+                <p>Planificador de Comidas</p>
+            </div>
+            <div class="buttons">
+                <span id="currentDate" style="color: #6b7280; font-size: 0.875rem;"></span>
+                <button onclick="refreshData()" class="btn btn-refresh">🔄 Actualizar</button>
+                <button onclick="logout()" class="btn btn-logout">Cerrar Sesión</button>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white p-8 rounded-lg shadow-xl">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p class="text-center mt-4 text-gray-600">Cargando datos...</p>
-            </div>
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner">
+        <div class="spinner">
+            <div class="spinner-circle"></div>
+            <p style="margin-top: 1rem; color: #6b7280;">Cargando datos...</p>
         </div>
+    </div>
 
+    <!-- Main Container -->
+    <div class="container">
         <!-- Overview Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <!-- Total Students -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold">Total Estudiantes</p>
-                        <p class="text-3xl font-bold text-blue-600 mt-2" id="totalStudents">0</p>
-                    </div>
-                    <div class="text-4xl">👥</div>
-                </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
+                <div class="stat-label">Total Estudiantes</div>
+                <div class="stat-value" id="totalStudents">0</div>
             </div>
-
-            <!-- Expected to Eat -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold">Ya Presentes</p>
-                        <p class="text-3xl font-bold text-green-600 mt-2" id="expectedToEat">0</p>
-                    </div>
-                    <div class="text-4xl">✅</div>
-                </div>
+            <div class="stat-card">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">✅</div>
+                <div class="stat-label">Ya Presentes</div>
+                <div class="stat-value" id="expectedToEat">0</div>
             </div>
-
-            <!-- Absent -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold">Ausentes</p>
-                        <p class="text-3xl font-bold text-red-600 mt-2" id="absent">0</p>
-                    </div>
-                    <div class="text-4xl">❌</div>
-                </div>
+            <div class="stat-card">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">❌</div>
+                <div class="stat-label">Ausentes</div>
+                <div class="stat-value" id="absent">0</div>
             </div>
-
-            <!-- Allergies -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-yellow-500">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold">Con Alergias</p>
-                        <p class="text-3xl font-bold text-yellow-600 mt-2" id="withAllergies">0</p>
-                    </div>
-                    <div class="text-4xl">⚠️</div>
-                </div>
+            <div class="stat-card">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
+                <div class="stat-label">Con Alergias</div>
+                <div class="stat-value" id="withAllergies">0</div>
             </div>
-
-            <!-- Special Diet -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-600 text-sm font-semibold">Dieta Especial</p>
-                        <p class="text-3xl font-bold text-purple-600 mt-2" id="withSpecialDiet">0</p>
-                    </div>
-                    <div class="text-4xl">🌱</div>
-                </div>
+            <div class="stat-card">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🌱</div>
+                <div class="stat-label">Dieta Especial</div>
+                <div class="stat-value" id="withSpecialDiet">0</div>
             </div>
         </div>
 
-        <!-- Class Grid -->
-        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">📋 Estudiantes por Clase</h2>
-                <button onclick="refreshData()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    🔄 Actualizar
-                </button>
-            </div>
-
-            <div id="classGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <!-- Class cards will be inserted here -->
+        <!-- Class Grid Section -->
+        <div class="section">
+            <div class="section-title">📋 Estudiantes por Clase</div>
+            <div id="classGrid" class="class-grid">
+                <p style="color: #6b7280;">Cargando datos...</p>
             </div>
         </div>
 
-        <!-- Dietary Summary -->
-        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">🍽️ Resumen de Dietas Especiales</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Allergies Summary -->
-                <div class="border rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Alergias Comunes</h3>
-                    <div id="allergiesList" class="space-y-3">
-                        <p class="text-gray-600 text-sm">Cargando...</p>
+        <!-- Dietary Summary Section -->
+        <div class="section">
+            <div class="section-title">🍽️ Resumen de Dietas Especiales</div>
+            <div class="two-column">
+                <div>
+                    <h3 style="font-weight: 600; color: #1f2937; margin-bottom: 1rem;">Alergias Comunes</h3>
+                    <div id="allergiesList">
+                        <p style="color: #6b7280; font-size: 0.875rem;">Cargando...</p>
                     </div>
                 </div>
-
-                <!-- Special Diets Summary -->
-                <div class="border rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Dietas Especiales Comunes</h3>
-                    <div id="dietsList" class="space-y-3">
-                        <p class="text-gray-600 text-sm">Cargando...</p>
+                <div>
+                    <h3 style="font-weight: 600; color: #1f2937; margin-bottom: 1rem;">Dietas Especiales Comunes</h3>
+                    <div id="dietsList">
+                        <p style="color: #6b7280; font-size: 0.875rem;">Cargando...</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Last Update -->
-        <div class="text-center text-gray-600 text-sm">
+        <div class="last-update">
             <p>Última actualización: <span id="lastUpdate">--:--</span></p>
             <p>Los datos se capturan automáticamente cada día a las 10:00 AM</p>
         </div>
@@ -165,7 +167,7 @@
         // Load kitchen data
         async function loadKitchenData() {
             try {
-                document.getElementById('loadingSpinner').classList.remove('hidden');
+                document.getElementById('loadingSpinner').classList.add('show');
                 
                 const token = localStorage.getItem('arrivapp_token');
                 if (!token) {
@@ -201,63 +203,61 @@
                     classGrid.appendChild(card);
                 });
 
-                document.getElementById('loadingSpinner').classList.add('hidden');
+                document.getElementById('loadingSpinner').classList.remove('show');
             } catch (error) {
                 console.error('Error loading kitchen data:', error);
                 alert('Error cargando datos del comedor. Por favor intenta de nuevo.');
-                document.getElementById('loadingSpinner').classList.add('hidden');
+                document.getElementById('loadingSpinner').classList.remove('show');
             }
         }
 
         // Create class card
         function createClassCard(cls) {
             const card = document.createElement('div');
-            card.className = 'bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-6 border-l-4 border-blue-500';
+            card.className = 'class-card';
             
             const attendancePercentage = cls.total_students > 0 
                 ? Math.round((cls.present / cls.total_students) * 100)
                 : 0;
 
             card.innerHTML = `
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-xl font-bold text-blue-600">Clase ${cls.class_name}</h3>
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">${attendancePercentage}%</span>
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <h3 class="class-card-title">Clase ${cls.class_name}</h3>
+                    <span style="background: #667eea; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem;">${attendancePercentage}%</span>
                 </div>
                 
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-gray-700">Total:</span>
-                        <span class="font-semibold text-gray-900">${cls.total_students}</span>
+                <div>
+                    <div class="class-card-stat">
+                        <span class="class-card-label">Total:</span>
+                        <span class="class-card-value">${cls.total_students}</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-green-700">Presentes:</span>
-                        <span class="font-semibold text-green-600">${cls.present}</span>
+                    <div class="class-card-stat">
+                        <span class="class-card-label" style="color: #059669;">✅ Presentes:</span>
+                        <span class="class-card-value" style="color: #059669;">${cls.present}</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-red-700">Ausentes:</span>
-                        <span class="font-semibold text-red-600">${cls.absent}</span>
+                    <div class="class-card-stat">
+                        <span class="class-card-label" style="color: #dc2626;">❌ Ausentes:</span>
+                        <span class="class-card-value" style="color: #dc2626;">${cls.absent}</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-yellow-700">Llegarán:</span>
-                        <span class="font-semibold text-yellow-600">${cls.will_arrive_later}</span>
+                    <div class="class-card-stat">
+                        <span class="class-card-label" style="color: #ca8a04;">Llegarán:</span>
+                        <span class="class-card-value" style="color: #ca8a04;">${cls.will_arrive_later}</span>
                     </div>
                     
-                    <hr class="my-3 border-blue-200">
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1rem 0;">
                     
-                    <div class="flex justify-between">
-                        <span class="text-yellow-700 text-sm">⚠️ Con Alergias:</span>
-                        <span class="font-semibold text-yellow-600">${cls.with_allergies}</span>
+                    <div class="class-card-stat">
+                        <span class="class-card-label" style="font-size: 0.75rem;">⚠️ Con Alergias:</span>
+                        <span class="class-card-value" style="color: #ca8a04;">${cls.with_allergies}</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-purple-700 text-sm">🌱 Dieta Especial:</span>
-                        <span class="font-semibold text-purple-600">${cls.with_special_diet}</span>
+                    <div class="class-card-stat">
+                        <span class="class-card-label" style="font-size: 0.75rem;">🌱 Dieta Especial:</span>
+                        <span class="class-card-value" style="color: #9333ea;">${cls.with_special_diet}</span>
                     </div>
                 </div>
                 
-                <div class="mt-4 bg-blue-500 rounded-lg p-2">
-                    <div class="w-full bg-gray-300 rounded-full h-2">
-                        <div class="bg-green-500 h-2 rounded-full" style="width: ${attendancePercentage}%"></div>
-                    </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${attendancePercentage}%"></div>
                 </div>
             `;
             
@@ -284,26 +284,26 @@
                 const allergiesList = document.getElementById('allergiesList');
                 if (data.with_allergies.common_allergies.length > 0) {
                     allergiesList.innerHTML = data.with_allergies.common_allergies.map(([allergy, count]) => `
-                        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded">
-                            <span class="text-gray-800">${allergy}</span>
-                            <span class="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm">${count}</span>
+                        <div class="dietary-item">
+                            <span class="dietary-label">${allergy}</span>
+                            <span class="dietary-count">${count}</span>
                         </div>
                     `).join('');
                 } else {
-                    allergiesList.innerHTML = '<p class="text-gray-600 text-sm">Sin alergias reportadas</p>';
+                    allergiesList.innerHTML = '<p style="color: #6b7280; font-size: 0.875rem;">Sin alergias reportadas</p>';
                 }
 
                 // Update diets list
                 const dietsList = document.getElementById('dietsList');
                 if (data.with_special_diet.common_diets.length > 0) {
                     dietsList.innerHTML = data.with_special_diet.common_diets.map(([diet, count]) => `
-                        <div class="flex justify-between items-center p-3 bg-purple-50 rounded">
-                            <span class="text-gray-800">${diet}</span>
-                            <span class="bg-purple-200 text-purple-800 px-3 py-1 rounded-full text-sm">${count}</span>
+                        <div class="dietary-item">
+                            <span class="dietary-label">${diet}</span>
+                            <span class="dietary-count">${count}</span>
                         </div>
                     `).join('');
                 } else {
-                    dietsList.innerHTML = '<p class="text-gray-600 text-sm">Sin dietas especiales reportadas</p>';
+                    dietsList.innerHTML = '<p style="color: #6b7280; font-size: 0.875rem;">Sin dietas especiales reportadas</p>';
                 }
             } catch (error) {
                 console.error('Error loading dietary summary:', error);
