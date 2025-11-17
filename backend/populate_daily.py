@@ -72,7 +72,7 @@ class TestDataManager:
         print(f"✅ {message}")
     
     def create_daily_students(self) -> int:
-        """Create 10 new students per school for today's testing"""
+        """Create 15 new students per school for today's testing"""
         print("\n📚 Creating daily test students...")
         
         schools = self.db.query(School).all()
@@ -84,7 +84,7 @@ class TestDataManager:
         students_count = 0
         
         for school in schools:
-            for i in range(10):  # 10 students per school per day
+            for i in range(15):  # 15 students per school per day (increased from 10)
                 first_name = fake.first_name()
                 last_name = fake.last_name()
                 full_name = f"{first_name} {last_name}"
@@ -108,7 +108,7 @@ class TestDataManager:
                 students_count += 1
             
             self.db.commit()
-            self.log_success(f"Created 10 students for {school.name}")
+            self.log_success(f"Created 15 students for {school.name}")
         
         self.results["students_created"] = students_count
         print(f"📊 Total students created today: {students_count}")
@@ -208,12 +208,12 @@ class TestDataManager:
             
             self.db.commit()
             
-            # Simulate justifications for absent students (40% justified)
+            # Simulate justifications for absent students (50% justified - increased from 40%)
             absent_students = [s for s in students_list if s not in attending_students]
             scenarios["absent"] += len(absent_students)
             
             if absent_students:
-                justified_count = int(len(absent_students) * 0.4)
+                justified_count = int(len(absent_students) * 0.5)  # 50% of absences get justified
                 for student in random.sample(absent_students, min(justified_count, len(absent_students))):
                     justification_options = [
                         (JustificationType.absence, "Mi hijo/a está enfermo/a con síntomas respiratorios."),
