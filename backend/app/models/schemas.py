@@ -38,7 +38,7 @@ class School(SchoolBase):
     created_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # User Schemas
@@ -71,7 +71,7 @@ class User(UserBase):
     created_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserWithSchool(User):
@@ -106,7 +106,7 @@ class Student(StudentBase):
     created_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class StudentWithSchool(Student):
@@ -131,7 +131,7 @@ class CheckIn(BaseModel):
     email_sent: bool
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CheckInWithStudent(CheckIn):
@@ -219,4 +219,4 @@ class Justification(JustificationBase):
     student_name: Optional[str] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
