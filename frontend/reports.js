@@ -919,7 +919,19 @@ async function exportPDF() {
     const reportType = document.getElementById('reportType').value;
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
-    const schoolId = document.getElementById('schoolFilter')?.value || null;
+    const schoolFilter = document.getElementById('schoolFilter');
+    const classFilter = document.getElementById('classFilter');
+    
+    // Get school_id based on role
+    let schoolId = null;
+    if (currentUser.role === 'admin' && schoolFilter) {
+        schoolId = schoolFilter.value ? parseInt(schoolFilter.value) : null;
+    } else if (currentUser.role === 'director') {
+        schoolId = currentUser.school_id;
+    }
+    
+    // Get class_name from filter
+    const className = classFilter && classFilter.value ? classFilter.value : null;
 
     if (!startDate || !endDate) {
         alert('Por favor selecciona un rango de fechas');
@@ -928,11 +940,18 @@ async function exportPDF() {
 
     const token = localStorage.getItem('arrivapp_token');
     let url = `${API_URL}/reports/export-pdf?report_type=${reportType}&start_date=${startDate}&end_date=${endDate}`;
-    if (schoolId) {
+    
+    if (schoolId && schoolId > 0) {
         url += `&school_id=${schoolId}`;
+    }
+    
+    if (className) {
+        url += `&class_name=${encodeURIComponent(className)}`;
     }
 
     try {
+        document.getElementById('loadingSpinner').classList.remove('hidden');
+        
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -940,7 +959,7 @@ async function exportPDF() {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to export PDF');
+            throw new Error(`PDF export failed with status ${response.status}`);
         }
 
         // Download the PDF
@@ -948,14 +967,24 @@ async function exportPDF() {
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        a.download = `arrivapp_${reportType}_${new Date().toISOString().split('T')[0]}.pdf`;
+        
+        // Create descriptive filename
+        let filename = `arrivapp_${reportType}_${startDate}_to_${endDate}`;
+        if (className) {
+            filename += `_${className}`;
+        }
+        filename += '.pdf';
+        
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(downloadUrl);
         a.remove();
-
+        
+        document.getElementById('loadingSpinner').classList.add('hidden');
         alert('PDF descargado exitosamente');
     } catch (error) {
+        document.getElementById('loadingSpinner').classList.add('hidden');
         console.error('Error exporting PDF:', error);
         alert('Error al exportar PDF. Por favor intenta de nuevo.');
     }

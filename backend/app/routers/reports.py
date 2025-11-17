@@ -423,6 +423,7 @@ async def export_pdf_report(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     school_id: Optional[int] = Query(None),
+    class_name: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -459,6 +460,8 @@ async def export_pdf_report(
     title_text = f"ArrivApp - {report_type.title()} Report"
     elements.append(Paragraph(title_text, title_style))
     elements.append(Paragraph(f"School: {school_name}", styles['Normal']))
+    if class_name:
+        elements.append(Paragraph(f"Class: {class_name}", styles['Normal']))
     elements.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
     elements.append(Spacer(1, 0.3*inch))
     
@@ -468,6 +471,7 @@ async def export_pdf_report(
             start_date=start_date,
             end_date=end_date,
             school_id=school_id,
+            class_name=class_name,
             db=db,
             current_user=current_user
         )
@@ -511,6 +515,7 @@ async def export_pdf_report(
             start_date=start_date,
             end_date=end_date,
             school_id=school_id,
+            class_name=class_name,
             db=db,
             current_user=current_user
         )
@@ -573,6 +578,7 @@ async def export_pdf_report(
             start_date=start_date,
             end_date=end_date,
             school_id=school_id,
+            class_name=class_name,
             db=db,
             current_user=current_user
         )
