@@ -22,7 +22,7 @@ from faker import Faker
 from app.core.database import SessionLocal, engine
 from app.models.models import (
     Student, School, CheckIn, Justification, 
-    JustificationType, JustificationStatus, User, UserRole
+    JustificationType, JustificationStatus, User, UserRole, AbsenceNotification
 )
 
 fake = Faker(['es_ES', 'es_MX'])
@@ -244,6 +244,22 @@ class TestDataManager:
                     
                     self.db.add(justification)
                     scenarios["justified_absence"] += 1
+            
+            self.db.commit()
+            
+            # Create absence notifications for absent students (simulate email sending)
+            for student in absent_students:
+                # 70% of absent students get an email notification
+                email_sent = random.random() < 0.7
+                
+                absence_notif = AbsenceNotification(
+                    student_id=student.id,
+                    notification_date=current_date,
+                    email_sent=email_sent,
+                    email_sent_at=current_date if email_sent else None
+                )
+                
+                self.db.add(absence_notif)
             
             self.db.commit()
             print(f"    ✓ Simulated {len(attending_students)} check-ins, {len(absent_students)} absences")
