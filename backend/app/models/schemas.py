@@ -83,7 +83,7 @@ class StudentBase(BaseModel):
     student_id: str
     name: str
     class_name: str
-    parent_email: EmailStr
+    parent_email: Optional[str] = None  # Changed from EmailStr to allow invalid emails from faker
 
 
 class StudentCreate(StudentBase):
@@ -93,7 +93,7 @@ class StudentCreate(StudentBase):
 class StudentUpdate(BaseModel):
     name: Optional[str] = None
     class_name: Optional[str] = None
-    parent_email: Optional[EmailStr] = None
+    parent_email: Optional[str] = None  # Changed from EmailStr to allow invalid emails from faker
     is_active: Optional[bool] = None
     school_id: Optional[int] = None
 
