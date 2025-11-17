@@ -92,6 +92,14 @@
             background: #dc2626;
             transform: translateY(-1px);
         }
+        .btn-back { 
+            background: #6b7280; 
+            color: white;
+        }
+        .btn-back:hover { 
+            background: #4b5563;
+            transform: translateY(-1px);
+        }
 
         /* Main Container */
         .container { 
@@ -410,6 +418,7 @@
             </div>
             <div class="header-actions">
                 <span class="header-date" id="currentDate"></span>
+                <button onclick="goToDashboard()" class="btn btn-back" id="backBtn" style="display: none;">← Volver a Dashboard</button>
                 <button onclick="refreshData()" class="btn btn-refresh">🔄 Actualizar</button>
                 <button onclick="logout()" class="btn btn-logout">Salir</button>
             </div>
@@ -500,8 +509,25 @@
             document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('es-ES');
         }
 
+        // Check user role and show/hide back button
+        function checkUserRoleAndShowButton() {
+            const currentUser = JSON.parse(localStorage.getItem('current_user') || '{}');
+            const backBtn = document.getElementById('backBtn');
+            
+            // Show back button for admin and director roles
+            if (currentUser.role && (currentUser.role === 'admin' || currentUser.role === 'director')) {
+                backBtn.style.display = 'flex';
+            }
+        }
+
+        // Navigate to dashboard
+        function goToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
         // Initialize
         async function init() {
+            checkUserRoleAndShowButton();
             updateCurrentDate();
             await loadKitchenData();
             await loadDietarySummary();
