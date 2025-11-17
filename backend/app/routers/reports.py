@@ -16,17 +16,17 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
-@router.get("/attendance-history")
-async def get_attendance_history(
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
-    school_id: Optional[int] = Query(None),
-    student_id: Optional[int] = Query(None),
-    class_name: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+# Internal helper function - does not use Query/Depends
+def _get_attendance_history_internal(
+    db: Session,
+    current_user: User,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    school_id: Optional[int] = None,
+    student_id: Optional[int] = None,
+    class_name: Optional[str] = None,
 ):
-    """Get attendance history with filters"""
+    """Internal function to get attendance history"""
     
     # Build base query
     query = db.query(CheckIn).join(Student)
@@ -82,6 +82,28 @@ async def get_attendance_history(
         })
     
     return {"records": result, "total": len(result)}
+
+
+@router.get("/attendance-history")
+async def get_attendance_history(
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    school_id: Optional[int] = Query(None),
+    student_id: Optional[int] = Query(None),
+    class_name: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get attendance history with filters"""
+    return _get_attendance_history_internal(
+        db=db,
+        current_user=current_user,
+        start_date=start_date,
+        end_date=end_date,
+        school_id=school_id,
+        student_id=student_id,
+        class_name=class_name
+    )
 
 
 @router.get("/attendance-with-absences")
@@ -466,14 +488,14 @@ async def export_pdf_report(
     elements.append(Spacer(1, 0.3*inch))
     
     if report_type == "history":
-        # Get attendance history
-        history_data = await get_attendance_history(
+        # Get attendance history using internal helper
+        history_data = _get_attendance_history_internal(
+            db=db,
+            current_user=current_user,
             start_date=start_date,
             end_date=end_date,
             school_id=school_id,
-            class_name=class_name,
-            db=db,
-            current_user=current_user
+            class_name=class_name
         )
         
         elements.append(Paragraph(f"<b>CheckIn History</b> ({history_data['total']} records)", styles['Heading2']))
@@ -509,16 +531,98 @@ async def export_pdf_report(
         elements.append(table)
     
     elif report_type == "statistics":
-        # Get statistics
-        stats_data = await get_statistics(
-            period="monthly",
-            start_date=start_date,
-            end_date=end_date,
-            school_id=school_id,
-            class_name=class_name,
-            db=db,
-            current_user=current_user
+        # Get statistics - inline implementation for PDF export
+        # Determine date range
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+        end = end.replace(hour=23, minute=59, second=59)
+        
+        # Build query with role-based filtering
+        query = db.query(CheckIn).join(Student)
+        
+        if current_user.role in [UserRole.director, UserRole.teacher]:
+            if not current_user.school_id:
+                raise HTTPException(status_code=403, detail="User has no assigned school")
+            query = query.filter(Student.school_id == current_user.school_id)
+        elif current_user.role != UserRole.admin:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        
+        # Admin can filter by school
+        if school_id and current_user.role == UserRole.admin:
+            query = query.filter(Student.school_id == school_id)
+        
+        # Filter by class
+        if class_name:
+            query = query.filter(Student.class_name == class_name)
+        
+        # Filter by date range
+        query_with_dates = query.filter(
+            and_(
+                CheckIn.checkin_time >= start,
+                CheckIn.checkin_time <= end
+            )
         )
+        
+        # Calculate statistics
+        total_attendance = query_with_dates.count()
+        present = total_attendance
+        late = query_with_dates.filter(CheckIn.is_late == True).count()
+        checked_out = query_with_dates.filter(CheckIn.checkout_time.isnot(None)).count()
+        
+        # Get total students in scope
+        student_query = db.query(Student)
+        if current_user.role in [UserRole.director, UserRole.teacher]:
+            student_query = student_query.filter(Student.school_id == current_user.school_id)
+        elif school_id and current_user.role == UserRole.admin:
+            student_query = student_query.filter(Student.school_id == school_id)
+        
+        total_students = student_query.filter(Student.is_active == True).count()
+        
+        # Calculate rates
+        attendance_rate = round((total_attendance / (total_students * 20)) * 100, 2) if total_students > 0 else 0
+        late_rate = round((late / total_attendance) * 100, 2) if total_attendance > 0 else 0
+        
+        # Daily breakdown
+        daily_stats = db.query(
+            func.date(CheckIn.checkin_time).label('date'),
+            func.count(CheckIn.id).label('total'),
+            func.sum(func.cast(CheckIn.is_late, Integer)).label('late_count')
+        ).join(Student)
+        
+        if current_user.role in [UserRole.director, UserRole.teacher]:
+            daily_stats = daily_stats.filter(Student.school_id == current_user.school_id)
+        elif school_id and current_user.role == UserRole.admin:
+            daily_stats = daily_stats.filter(Student.school_id == school_id)
+        
+        daily_stats = daily_stats.filter(
+            and_(
+                CheckIn.checkin_time >= start,
+                CheckIn.checkin_time <= end
+            )
+        ).group_by(func.date(CheckIn.checkin_time)).all()
+        
+        daily_breakdown = [
+            {
+                "date": str(day.date),
+                "total": day.total,
+                "late": int(day.late_count) if day.late_count else 0
+            }
+            for day in daily_stats
+        ]
+        
+        stats_data = {
+            "period": "monthly",
+            "start_date": start.strftime("%Y-%m-%d"),
+            "end_date": end.strftime("%Y-%m-%d"),
+            "total_students": total_students,
+            "total_attendance": total_attendance,
+            "present": present,
+            "late": late,
+            "early_checkout": 0,
+            "attendance_rate": attendance_rate,
+            "late_rate": late_rate,
+            "daily_breakdown": daily_breakdown
+        }
         
         elements.append(Paragraph(f"<b>Statistics Report</b>", styles['Heading2']))
         elements.append(Paragraph(f"Period: {stats_data['start_date']} to {stats_data['end_date']}", styles['Normal']))
@@ -573,15 +677,103 @@ async def export_pdf_report(
             elements.append(daily_table)
     
     elif report_type == "tardiness":
-        # Get tardiness analysis
-        tardiness_data = await get_tardiness_analysis(
-            start_date=start_date,
-            end_date=end_date,
-            school_id=school_id,
-            class_name=class_name,
-            db=db,
-            current_user=current_user
+        # Get tardiness analysis - inline implementation
+        # Date range
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+        end = end.replace(hour=23, minute=59, second=59)
+        
+        # Get all check-ins for period
+        query = db.query(CheckIn).join(Student)
+        
+        if current_user.role in [UserRole.director, UserRole.teacher]:
+            if not current_user.school_id:
+                raise HTTPException(status_code=403, detail="User has no assigned school")
+            query = query.filter(Student.school_id == current_user.school_id)
+        elif current_user.role != UserRole.admin:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        
+        if school_id and current_user.role == UserRole.admin:
+            query = query.filter(Student.school_id == school_id)
+        
+        if class_name:
+            query = query.filter(Student.class_name == class_name)
+        
+        query = query.filter(
+            and_(
+                CheckIn.checkin_time >= start,
+                CheckIn.checkin_time <= end
+            )
         )
+        
+        records = query.all()
+        
+        # Group by student and calculate tardiness
+        student_tardiness = {}
+        for record in records:
+            student_id = record.student_id
+            if student_id not in student_tardiness:
+                student_name = f"{record.student.name}" if record.student else "Unknown"
+                student_tardiness[student_id] = {
+                    "student_name": student_name,
+                    "total_attendance": 0,
+                    "late_count": 0
+                }
+            student_tardiness[student_id]["total_attendance"] += 1
+            if record.is_late:
+                student_tardiness[student_id]["late_count"] += 1
+        
+        # Calculate percentages and sort
+        top_tardy_students = []
+        for student_id, data in student_tardiness.items():
+            late_pct = round((data["late_count"] / data["total_attendance"]) * 100, 1) if data["total_attendance"] > 0 else 0
+            top_tardy_students.append({
+                "student_name": data["student_name"],
+                "total_attendance": data["total_attendance"],
+                "late_count": data["late_count"],
+                "late_percentage": late_pct
+            })
+        
+        top_tardy_students.sort(key=lambda x: x["late_count"], reverse=True)
+        
+        # Weekly trends
+        weekly_stats = db.query(
+            func.strftime('%Y-W%W', CheckIn.checkin_time).label('week'),
+            func.count(CheckIn.id).label('total'),
+            func.sum(func.cast(CheckIn.is_late, Integer)).label('late_count')
+        ).join(Student)
+        
+        if current_user.role in [UserRole.director, UserRole.teacher]:
+            weekly_stats = weekly_stats.filter(Student.school_id == current_user.school_id)
+        elif school_id and current_user.role == UserRole.admin:
+            weekly_stats = weekly_stats.filter(Student.school_id == school_id)
+        
+        if class_name:
+            weekly_stats = weekly_stats.filter(Student.class_name == class_name)
+        
+        weekly_stats = weekly_stats.filter(
+            and_(
+                CheckIn.checkin_time >= start,
+                CheckIn.checkin_time <= end
+            )
+        ).group_by(func.strftime('%Y-W%W', CheckIn.checkin_time)).all()
+        
+        weekly_trends = [
+            {
+                "week": week.week,
+                "total": week.total,
+                "late": int(week.late_count) if week.late_count else 0,
+                "late_percentage": round((int(week.late_count if week.late_count else 0) / week.total) * 100, 1) if week.total > 0 else 0
+            }
+            for week in weekly_stats
+        ]
+        
+        tardiness_data = {
+            "start_date": start.strftime("%Y-%m-%d"),
+            "end_date": end.strftime("%Y-%m-%d"),
+            "top_tardy_students": top_tardy_students,
+            "weekly_trends": weekly_trends
+        }
         
         elements.append(Paragraph(f"<b>Tardiness Analysis</b>", styles['Heading2']))
         elements.append(Paragraph(f"Period: {tardiness_data['start_date']} to {tardiness_data['end_date']}", styles['Normal']))
