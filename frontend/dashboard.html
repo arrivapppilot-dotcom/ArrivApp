@@ -49,6 +49,10 @@
         .three-column { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
         .user-info { text-align: right; font-size: 0.875rem; color: #6b7280; }
         .user-info strong { color: #1f2937; }
+        .role-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin-left: 0.5rem; text-transform: uppercase; }
+        .role-admin { background: #fee2e2; color: #991b1b; }
+        .role-director { background: #dbeafe; color: #1e40af; }
+        .role-teacher { background: #dbeafe; color: #0f766e; }
         @media (max-width: 768px) {
             .two-column { grid-template-columns: 1fr; }
             .three-column { grid-template-columns: 1fr; }
@@ -70,7 +74,7 @@
             </div>
             <div style="flex: 1; text-align: center;">
                 <div class="user-info">
-                    <div>Bienvenido/a, <strong id="userName">Cargando...</strong></div>
+                    <div>Bienvenido/a, <strong id="userName">Cargando...</strong><span id="roleBadge" class="role-badge" style="display:none;"></span></div>
                     <div id="currentTime" style="font-size: 0.75rem;">-</div>
                 </div>
             </div>
@@ -247,9 +251,9 @@
             await checkAuth();
             updateCurrentTime();
             setInterval(updateCurrentTime, 1000);
-            loadDashboardData();
-            await loadSchools();
             await checkPermissions();
+            await loadSchools();
+            await loadDashboardData();
         });
 
         function updateCurrentTime() {
@@ -279,9 +283,23 @@
                 });
                 if (response.ok) {
                     const user = await response.json();
-                    document.getElementById('userName').textContent = user.full_name || user.email;
+                    const displayName = user.full_name || user.email;
+                    const role = user.role || 'teacher';
+                    
+                    document.getElementById('userName').textContent = displayName;
+                    
+                    // Display role badge
+                    const roleBadge = document.getElementById('roleBadge');
+                    const roleText = role.charAt(0).toUpperCase() + role.slice(1);
+                    roleBadge.textContent = roleText;
+                    roleBadge.className = `role-badge role-${role}`;
+                    roleBadge.style.display = 'inline-block';
+                    
+                    console.log(`User: ${displayName}, Role: ${role}`);
                 } else {
                     console.error('Failed to get user info:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error details:', errorText);
                 }
             } catch (error) {
                 console.error('Error fetching user info:', error);
@@ -298,12 +316,40 @@
                     const user = await response.json();
                     const role = user.role || 'teacher';
                     
-                    if (role === 'admin' || role === 'school_admin') {
-                        document.getElementById('usersBtn').style.display = 'inline-block';
-                        document.getElementById('schoolsBtn').style.display = 'inline-block';
+                    // Store role for reference
+                    window.currentUserRole = role;
+                    
+                    // Show/hide buttons based on role
+                    const reportsBtn = document.querySelector('[onclick*="reports.html"]');
+                    const studentsBtn = document.querySelector('[onclick*="students.html"]');
+                    const usersBtn = document.getElementById('usersBtn');
+                    const schoolsBtn = document.getElementById('schoolsBtn');
+                    const justificationsBtn = document.querySelector('[onclick*="justifications.html"]');
+                    
+                    // All authenticated users can see these
+                    if (reportsBtn) reportsBtn.style.display = 'inline-block';
+                    if (studentsBtn) studentsBtn.style.display = 'inline-block';
+                    
+                    // Role-based visibility
+                    if (role === 'admin') {
+                        // Admin sees everything
+                        if (usersBtn) usersBtn.style.display = 'inline-block';
+                        if (schoolsBtn) schoolsBtn.style.display = 'inline-block';
+                    } else if (role === 'director') {
+                        // Director sees users and reports for their school
+                        if (usersBtn) usersBtn.style.display = 'inline-block';
+                        if (schoolsBtn) schoolsBtn.style.display = 'none';
+                    } else if (role === 'teacher') {
+                        // Teacher only sees reports and students
+                        if (usersBtn) usersBtn.style.display = 'none';
+                        if (schoolsBtn) schoolsBtn.style.display = 'none';
                     }
+                    
+                    console.log(`User role: ${role}, buttons visibility updated`);
                 } else {
                     console.error('Failed to check permissions:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error details:', errorText);
                 }
             } catch (error) {
                 console.error('Error checking permissions:', error);
@@ -391,6 +437,80 @@
             document.getElementById('lateWithNotice').textContent = data.late_with_notice || 0;
             document.getElementById('lateNoNotice').textContent = (data.late || 0) - (data.late_with_notice || 0);
             document.getElementById('justified').textContent = data.justified || 0;
+            
+            // Load table data
+            loadTableData();
+        }
+
+        async function loadTableData() {
+            const token = localStorage.getItem('arrivapp_token');
+            const today = document.getElementById('dateFilter').value || new Date().toISOString().split('T')[0];
+            
+            try {
+                // Fetch attendance records for today
+                const url = new URL(`${API_URL}/reports/attendance-history`, window.location.origin);
+                url.searchParams.append('start_date', today);
+                url.searchParams.append('end_date', today);
+                
+                const response = await fetch(url.toString(), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const records = await response.json();
+                    
+                    // Organize records by type
+                    const justified = [];
+                    const unregistered = [];
+                    const late = [];
+                    const present = [];
+                    
+                    records.forEach(record => {
+                        // Placeholder - tables will show "No data" message for now
+                    });
+                    
+                    // Update tables
+                    updateTableUI('justifiedStudentsTable', justified, ['Alumno', 'Tipo', 'Fecha', 'Estado']);
+                    updateTableUI('unregisteredStudentsTable', unregistered, ['Alumno', 'Clase', 'Colegio', 'Email']);
+                    updateTableUI('lateArrivalsTable', late, ['Alumno', 'Hora Llegada', 'Retraso', 'Justificante']);
+                    updateTableUI('presentStudentsTable', present, ['Alumno', 'Hora Entrada', 'Hora Salida', 'Estado']);
+                } else {
+                    console.error('Failed to load attendance records:', response.status);
+                    // Show "no data" message
+                    showNoData('justifiedStudentsTable', 4);
+                    showNoData('unregisteredStudentsTable', 4);
+                    showNoData('lateArrivalsTable', 4);
+                    showNoData('presentStudentsTable', 4);
+                }
+            } catch (error) {
+                console.error('Error loading table data:', error);
+                // Show "no data" message
+                showNoData('justifiedStudentsTable', 4);
+                showNoData('unregisteredStudentsTable', 4);
+                showNoData('lateArrivalsTable', 4);
+                showNoData('presentStudentsTable', 4);
+            }
+        }
+
+        function updateTableUI(tableId, records, headers) {
+            const tableBody = document.getElementById(tableId);
+            if (!tableBody) return;
+            
+            if (records.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="${headers.length}" style="text-align: center; color: #6b7280; padding: 2rem;">No hay datos disponibles</td></tr>`;
+            } else {
+                // Populate with records
+                tableBody.innerHTML = records.map(record => {
+                    return `<tr>${Object.values(record).map(val => `<td>${val || '-'}</td>`).join('')}</tr>`;
+                }).join('');
+            }
+        }
+
+        function showNoData(tableId, colCount) {
+            const tableBody = document.getElementById(tableId);
+            if (tableBody) {
+                tableBody.innerHTML = `<tr><td colspan="${colCount}" style="text-align: center; color: #6b7280; padding: 2rem;">No hay datos disponibles</td></tr>`;
+            }
         }
 
         function logout() {
