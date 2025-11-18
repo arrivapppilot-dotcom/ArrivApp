@@ -21,15 +21,27 @@ jobs:
           cd backend
           pip install -r requirements.txt -q
       
+      - name: Check secrets
+        run: |
+          if [ -z "${{ secrets.DATABASE_URL }}" ]; then
+            echo "⚠️  DATABASE_URL secret is not set in GitHub"
+            echo "This workflow requires the Render PostgreSQL connection string as a secret"
+            echo "To set it up:"
+            echo "1. Go to: https://github.com/arrivapppilot-dotcom/ArrivApp/settings/secrets/actions"
+            echo "2. Click 'New repository secret'"
+            echo "3. Name: DATABASE_URL"
+            echo "4. Value: <paste from Render dashboard>"
+            echo "5. Click 'Add secret'"
+            exit 1
+          fi
+      
       - name: Populate Render database
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY || 'populate-dev-key' }}
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER || 'localhost' }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL || 'admin@example.com' }}
+          SECRET_KEY: populate-script-key
+          SMTP_HOST: localhost
+          SMTP_PORT: 587
+          ADMIN_EMAIL: admin@example.com
         run: |
           cd backend
           python populate_render_db.py
