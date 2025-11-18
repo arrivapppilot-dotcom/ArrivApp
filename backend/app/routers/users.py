@@ -60,6 +60,31 @@ async def list_users(
     return [serialize_user(user) for user in users]
 
 
+@router.get("/school/users")
+async def list_school_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """List users in current user's school (admin or director)."""
+    from sqlalchemy.orm import joinedload
+    
+    # Admins see all users, directors see only their school's users
+    if current_user.role == UserRole.admin:
+        users = db.query(User).options(joinedload(User.school)).offset(skip).limit(limit).all()
+    elif current_user.role == UserRole.director:
+        if not current_user.school_id:
+            raise HTTPException(status_code=400, detail="Director must have a school assigned")
+        users = db.query(User).options(joinedload(User.school)).filter(
+            User.school_id == current_user.school_id
+        ).offset(skip).limit(limit).all()
+    else:
+        raise HTTPException(status_code=403, detail="Only admins and directors can view users")
+    
+    return [serialize_user(user) for user in users]
+
+
 @router.get("/{user_id}", response_model=UserWithSchool)
 async def get_user(
     user_id: int,

@@ -75,11 +75,16 @@ async function loadSchools() {
 // Load users
 async function loadUsers() {
     try {
-        users = await apiRequest('/api/users/');
+        // Use school-specific endpoint for directors, all users for admins
+        const endpoint = getCurrentUserRole() === 'admin' ? '/api/users/' : '/api/users/school/users';
+        users = await apiRequest(endpoint);
         renderUsers();
     } catch (error) {
         console.error('Error loading users:', error);
-        alert('Error al cargar usuarios: ' + error.message);
+        // Don't show alert if it's just a 403 - let user see empty list
+        if (error.message && !error.message.includes('403')) {
+            alert('Error al cargar usuarios: ' + error.message);
+        }
     }
 }
 
@@ -527,8 +532,21 @@ function initializeUI() {
     let user = {};
     try {
         const userStr = localStorage.getItem('arrivapp_user');
+        
+        // Handle old format (plain string like "director_sj")
+        if (userStr && !userStr.startsWith('{')) {
+            console.log('Migrating old localStorage format...');
+            // Old format detected - clear it and redirect to login
+            localStorage.removeItem('arrivapp_token');
+            localStorage.removeItem('arrivapp_user');
+            localStorage.removeItem('arrivapp_user_role');
+            alert('Por favor, inicia sesión nuevamente después de esta actualización.');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        // Try to parse as JSON
         if (userStr) {
-            // Try to parse as JSON first
             user = JSON.parse(userStr);
         }
     } catch (e) {
