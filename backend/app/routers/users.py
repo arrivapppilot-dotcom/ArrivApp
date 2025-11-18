@@ -431,7 +431,7 @@ async def create_teacher(
 @router.get("/classes")
 async def get_classes(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_director_or_admin)
+    current_user: User = Depends(get_current_director_or_admin)  # FIXED: Allow directors, not just admins
 ):
     """Get list of all classes in current user's school (or all if admin)."""
     from sqlalchemy import distinct
