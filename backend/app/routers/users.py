@@ -531,3 +531,4 @@ async def get_teacher_classes(
         "teacher_name": teacher.full_name,
         "assigned_classes": classes
     }
+# Force redeploy at Tue Nov 18 20:13:41 CET 2025
