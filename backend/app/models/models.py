@@ -48,9 +48,28 @@ class User(Base):
     
     # Relationships
     school = relationship("School", back_populates="users")
+    assigned_classes = relationship("TeacherClassAssignment", back_populates="teacher", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User {self.username} ({self.role.value})>"
+
+
+class TeacherClassAssignment(Base):
+    """Track which classes each teacher is assigned to"""
+    __tablename__ = "teacher_class_assignments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    teacher_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=False)
+    class_name = Column(String, nullable=False)  # e.g., "5A", "3B"
+    assigned_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    teacher = relationship("User", back_populates="assigned_classes")
+    school = relationship("School")
+    
+    def __repr__(self):
+        return f"<TeacherClassAssignment teacher_id={self.teacher_id} class={self.class_name}>"
 
 
 class Student(Base):

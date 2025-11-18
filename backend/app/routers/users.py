@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
-from app.models.models import User, School, UserRole
+from app.models.models import User, School, UserRole, TeacherClassAssignment, Student
 from app.models.schemas import (
     User as UserSchema, 
     UserCreate, 
@@ -284,3 +284,225 @@ async def delete_user(
     db.commit()
     
     return None
+
+
+# ==================== Director-specific endpoints ====================
+
+def get_current_director(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+) -> User:
+    """Get current user if they are a director (or admin)."""
+    from app.core.deps import get_current_user
+    
+    # For now, we check if user is admin or director
+    if current_user.role not in [UserRole.admin, UserRole.director]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only directors and admins can manage teachers"
+        )
+    return current_user
+
+
+@router.post("/create-teacher", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def create_teacher(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_director: User = Depends(get_current_director)
+):
+    """
+    Create a teacher profile (director only).
+    
+    Expected data:
+    {
+        "full_name": "John Doe",
+        "email": "john@example.com",
+        "password": "secure_password",
+        "classes": ["5A", "5B"]  # Optional: assign to classes
+    }
+    """
+    full_name = data.get("full_name", "").strip()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "").strip()
+    classes = data.get("classes", [])
+    
+    # Validation
+    if not full_name:
+        raise HTTPException(status_code=400, detail="full_name is required")
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email is required")
+    if not password or len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Check if email already exists
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(status_code=400, detail="Email already exists")
+    
+    # Generate username from email
+    username = email.split("@")[0]
+    while db.query(User).filter(User.username == username).first():
+        import random
+        username = f"{email.split('@')[0]}{random.randint(100, 999)}"
+    
+    # Get director's school
+    if current_director.role == UserRole.director:
+        school_id = current_director.school_id
+        if not school_id:
+            raise HTTPException(status_code=400, detail="Director must have a school assigned")
+    else:  # admin
+        # For admin, school_id should be provided in data
+        school_id = data.get("school_id")
+        if not school_id:
+            raise HTTPException(status_code=400, detail="school_id is required for admins")
+    
+    # Verify school exists
+    school = db.query(School).filter(School.id == school_id).first()
+    if not school:
+        raise HTTPException(status_code=400, detail="School not found")
+    
+    # Create teacher user
+    teacher = User(
+        email=email,
+        username=username,
+        full_name=full_name,
+        hashed_password=get_password_hash(password),
+        role=UserRole.teacher,
+        school_id=school_id,
+        is_active=True,
+        is_admin=False
+    )
+    
+    db.add(teacher)
+    db.flush()  # Get the teacher ID without committing
+    
+    # Assign to classes if provided
+    assigned_classes = []
+    if classes and isinstance(classes, list):
+        for class_name in classes:
+            class_name = str(class_name).strip()
+            if class_name:
+                assignment = TeacherClassAssignment(
+                    teacher_id=teacher.id,
+                    school_id=school_id,
+                    class_name=class_name
+                )
+                db.add(assignment)
+                assigned_classes.append(class_name)
+    
+    db.commit()
+    db.refresh(teacher)
+    
+    return {
+        "message": "Teacher created successfully",
+        "teacher_id": teacher.id,
+        "username": username,
+        "email": email,
+        "full_name": full_name,
+        "school": school.name,
+        "assigned_classes": assigned_classes
+    }
+
+
+@router.get("/classes")
+async def get_classes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Get list of all classes in current user's school (or all if admin)."""
+    from sqlalchemy import distinct
+    
+    query = db.query(distinct(Student.class_name)).filter(Student.is_active == True)
+    
+    # If director, only show their school's classes
+    if current_user.role == UserRole.director and current_user.school_id:
+        query = query.filter(Student.school_id == current_user.school_id)
+    
+    classes = sorted([row[0] for row in query.all()])
+    
+    return {
+        "classes": classes,
+        "school_id": current_user.school_id
+    }
+
+
+@router.post("/{teacher_id}/assign-classes", response_model=dict)
+async def assign_classes(
+    teacher_id: int,
+    data: dict,
+    db: Session = Depends(get_db),
+    current_director: User = Depends(get_current_director)
+):
+    """
+    Assign or reassign classes to a teacher (director only).
+    
+    Expected data:
+    {
+        "classes": ["5A", "5B", "6A"]
+    }
+    """
+    teacher = db.query(User).filter(User.id == teacher_id).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    
+    # Verify teacher is in current director's school
+    if current_director.role == UserRole.director:
+        if teacher.school_id != current_director.school_id:
+            raise HTTPException(status_code=403, detail="Cannot manage teachers from other schools")
+    
+    if teacher.role != UserRole.teacher:
+        raise HTTPException(status_code=400, detail="User is not a teacher")
+    
+    classes = data.get("classes", [])
+    if not isinstance(classes, list):
+        raise HTTPException(status_code=400, detail="classes must be a list")
+    
+    # Delete existing assignments
+    db.query(TeacherClassAssignment).filter(
+        TeacherClassAssignment.teacher_id == teacher_id
+    ).delete()
+    
+    # Add new assignments
+    assigned_classes = []
+    for class_name in classes:
+        class_name = str(class_name).strip()
+        if class_name:
+            assignment = TeacherClassAssignment(
+                teacher_id=teacher_id,
+                school_id=teacher.school_id,
+                class_name=class_name
+            )
+            db.add(assignment)
+            assigned_classes.append(class_name)
+    
+    db.commit()
+    
+    return {
+        "message": "Classes assigned successfully",
+        "teacher_id": teacher_id,
+        "teacher_name": teacher.full_name,
+        "assigned_classes": assigned_classes
+    }
+
+
+@router.get("/{teacher_id}/assigned-classes")
+async def get_teacher_classes(
+    teacher_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Get classes assigned to a specific teacher."""
+    teacher = db.query(User).filter(User.id == teacher_id).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    
+    assignments = db.query(TeacherClassAssignment).filter(
+        TeacherClassAssignment.teacher_id == teacher_id
+    ).all()
+    
+    classes = [a.class_name for a in assignments]
+    
+    return {
+        "teacher_id": teacher_id,
+        "teacher_name": teacher.full_name,
+        "assigned_classes": classes
+    }
