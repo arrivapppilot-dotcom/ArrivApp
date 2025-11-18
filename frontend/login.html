@@ -194,7 +194,6 @@
 
                 // Store token
                 localStorage.setItem('arrivapp_token', data.access_token);
-                localStorage.setItem('arrivapp_user', username);
 
                 // Fetch user info to check role
                 const userResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
@@ -204,6 +203,17 @@
                 });
                 
                 const userData = await userResponse.json();
+                
+                // Store complete user object as JSON
+                localStorage.setItem('arrivapp_user', JSON.stringify({
+                    username: username,
+                    email: userData.email,
+                    role: userData.role,
+                    school_id: userData.school_id,
+                    full_name: userData.full_name
+                }));
+                
+                // Also store role separately for quick access
                 localStorage.setItem('arrivapp_user_role', userData.role);
                 
                 // Redirect based on role
