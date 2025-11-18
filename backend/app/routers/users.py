@@ -431,14 +431,15 @@ async def create_teacher(
 @router.get("/classes")
 async def get_classes(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_director_or_admin)  # FIXED: Allow directors, not just admins
+    current_user: User = Depends(get_current_director_or_admin)
 ):
-    """Get list of all classes in current user's school (or all if admin)."""
+    """Get list of all classes in current user's school or all if admin."""
     from sqlalchemy import distinct
     
+    # Query active classes
     query = db.query(distinct(Student.class_name)).filter(Student.is_active == True)
     
-    # If director, only show their school's classes
+    # Filter by school if director
     if current_user.role == UserRole.director and current_user.school_id:
         query = query.filter(Student.school_id == current_user.school_id)
     
@@ -446,7 +447,8 @@ async def get_classes(
     
     return {
         "classes": classes,
-        "school_id": current_user.school_id
+        "school_id": current_user.school_id,
+        "user_role": str(current_user.role)
     }
 
 
