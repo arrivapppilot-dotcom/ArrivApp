@@ -29,7 +29,12 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={
+            "sub": user.username,
+            "role": user.role.value if hasattr(user.role, 'value') else str(user.role),
+            "school_id": user.school_id
+        }, 
+        expires_delta=access_token_expires
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
