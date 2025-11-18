@@ -452,6 +452,20 @@ async def get_classes(
     }
 
 
+@router.get("/test/director-check")
+async def test_director_check(
+    current_user: User = Depends(get_current_director_or_admin)
+):
+    """Test endpoint to verify director auth works."""
+    return {
+        "status": "success",
+        "message": "Director or admin can access this",
+        "username": current_user.username,
+        "role": str(current_user.role),
+        "school_id": current_user.school_id
+    }
+
+
 @router.post("/{teacher_id}/assign-classes", response_model=dict)
 async def assign_classes(
     teacher_id: int,
