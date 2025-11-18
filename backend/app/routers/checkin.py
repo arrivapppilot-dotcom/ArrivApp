@@ -269,6 +269,15 @@ async def get_dashboard_data(
     present_student_ids = {checkin.student_id for checkin in checkins}
     late_checkins = [checkin for checkin in checkins if checkin.is_late]
     
+    # DEBUG: Log the stats calculation
+    print(f"[DEBUG] Dashboard endpoint:")
+    print(f"  Date: {target_date}")
+    print(f"  User role: {current_user.role}")
+    print(f"  Total students: {len(all_students)}")
+    print(f"  Present students: {len(present_student_ids)}")
+    print(f"  Late checkins: {len(late_checkins)}")
+    print(f"  Absent students: {len(all_students) - len(present_student_ids)}")
+    
     stats = DashboardStats(
         total_present=len(present_student_ids),
         total_absent=len(all_students) - len(present_student_ids),
