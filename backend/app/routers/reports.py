@@ -276,13 +276,9 @@ async def get_statistics(
     # Late arrivals
     late = query.filter(CheckIn.is_late == True).count()
     
-    # DEBUG: Log what we're returning
+    # DEBUG: Log request context
     print(f"[DEBUG STATS] Period: {period}, Date: {start.date()}")
     print(f"[DEBUG STATS] Current user role: {current_user.role}, school_id: {current_user.school_id}")
-    print(f"[DEBUG STATS] Total students: {total_students}")
-    print(f"[DEBUG STATS] Total attendance: {total_attendance}")
-    print(f"[DEBUG STATS] Present: {present}")
-    print(f"[DEBUG STATS] Late: {late}")
     
     # Students who checked out
     checked_out = query.filter(CheckIn.checkout_time.isnot(None)).count()
@@ -295,6 +291,15 @@ async def get_statistics(
         student_query = student_query.filter(Student.school_id == school_id)
     
     total_students = student_query.filter(Student.is_active == True).count()
+    
+    # DEBUG: Log computed statistics (after total_students is calculated)
+    try:
+        print(f"[DEBUG STATS] Total students: {total_students}")
+        print(f"[DEBUG STATS] Total attendance: {total_attendance}")
+        print(f"[DEBUG STATS] Present: {present}")
+        print(f"[DEBUG STATS] Late: {late}")
+    except Exception as e:
+        print(f"[DEBUG STATS] Warning: could not log stats - {e}")
     
     # Daily breakdown
     daily_stats = db.query(
