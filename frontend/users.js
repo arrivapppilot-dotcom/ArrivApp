@@ -347,14 +347,30 @@ function closeComedorModal() {
 
 // Get current user's role
 function getCurrentUserRole() {
-    const user = JSON.parse(localStorage.getItem('arrivapp_user') || '{}');
-    return user.role;
+    try {
+        const userStr = localStorage.getItem('arrivapp_user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            return user.role;
+        }
+    } catch (e) {
+        console.warn('Could not parse user role:', e);
+    }
+    return null;
 }
 
 // Get current user's school
 function getCurrentUserSchool() {
-    const user = JSON.parse(localStorage.getItem('arrivapp_user') || '{}');
-    return user.school_id;
+    try {
+        const userStr = localStorage.getItem('arrivapp_user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            return user.school_id;
+        }
+    } catch (e) {
+        console.warn('Could not parse user school:', e);
+    }
+    return null;
 }
 
 // Load classes for teacher assignment
@@ -439,9 +455,17 @@ function showTeacherModal() {
     loadClassesForTeacher();
     
     // Set school display name
-    const user = JSON.parse(localStorage.getItem('arrivapp_user') || '{}');
-    const school = schools.find(s => s.id === user.school_id);
-    const schoolName = school ? school.name : 'Tu escuela';
+    let schoolName = 'Tu escuela';
+    try {
+        const userStr = localStorage.getItem('arrivapp_user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            const school = schools.find(s => s.id === user.school_id);
+            schoolName = school ? school.name : 'Tu escuela';
+        }
+    } catch (e) {
+        console.warn('Could not get school name:', e);
+    }
     document.getElementById('teacherSchoolDisplay').textContent = schoolName;
     
     document.getElementById('teacherModal').style.display = 'flex';
@@ -500,7 +524,18 @@ function logout() {
 // Initialize
 function initializeUI() {
     // Show/hide teacher button based on role
-    const user = JSON.parse(localStorage.getItem('arrivapp_user') || '{}');
+    let user = {};
+    try {
+        const userStr = localStorage.getItem('arrivapp_user');
+        if (userStr) {
+            // Try to parse as JSON first
+            user = JSON.parse(userStr);
+        }
+    } catch (e) {
+        console.warn('Could not parse user from localStorage:', e);
+        user = {};
+    }
+    
     const createTeacherBtn = document.getElementById('createTeacherBtn');
     
     if (user.role === 'director' || user.role === 'admin') {
