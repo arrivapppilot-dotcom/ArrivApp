@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
-from app.core.deps import get_current_admin_user
+from app.core.deps import get_current_admin_user, get_current_director_or_admin
 from app.models.models import User, School, UserRole, TeacherClassAssignment, Student
 from app.models.schemas import (
     User as UserSchema, 
@@ -65,7 +65,7 @@ async def list_school_users(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_director_or_admin)
 ):
     """List users in current user's school (admin or director)."""
     from sqlalchemy.orm import joinedload
