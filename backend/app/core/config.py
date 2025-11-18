@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
     
-    # Security
-    SECRET_KEY: str
+    # Security (optional for scripts like populate_render_db)
+    SECRET_KEY: Optional[str] = "populate-script-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
     

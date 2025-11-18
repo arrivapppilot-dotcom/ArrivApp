@@ -24,11 +24,12 @@ jobs:
       - name: Populate Render database
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY || 'populate-dev-key' }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER || 'localhost' }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL || 'admin@example.com' }}
         run: |
           cd backend
           python populate_render_db.py
