@@ -345,14 +345,127 @@ function closeComedorModal() {
     document.getElementById('comedorModal').style.display = 'none';
 }
 
+// Get current user's role
+function getCurrentUserRole() {
+    const user = JSON.parse(localStorage.getItem('arrivapp_user') || '{}');
+    return user.role;
+}
+
+// Get current user's school
+function getCurrentUserSchool() {
+    const user = JSON.parse(localStorage.getItem('arrivapp_user') || '{}');
+    return user.school_id;
+}
+
+// Load classes for teacher assignment
+async function loadClassesForTeacher() {
+    try {
+        const response = await apiRequest('/api/users/classes');
+        const select = document.getElementById('teacherClasses');
+        select.innerHTML = '';
+        
+        if (response.classes && Array.isArray(response.classes)) {
+            response.classes.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading classes:', error);
+    }
+}
+
+// Create Teacher
+async function createTeacher() {
+    const fullName = document.getElementById('teacherName').value.trim();
+    const email = document.getElementById('teacherEmail').value.trim();
+    const password = document.getElementById('teacherPassword').value;
+    const classSelect = document.getElementById('teacherClasses');
+    const classes = Array.from(classSelect.selectedOptions).map(opt => opt.value);
+    
+    if (!fullName) {
+        alert('Por favor, ingresa el nombre completo del profesor');
+        return;
+    }
+    
+    if (!email || !email.includes('@')) {
+        alert('Por favor, ingresa un email válido');
+        return;
+    }
+    
+    if (!password || password.length < 6) {
+        alert('La contraseña debe tener al menos 6 caracteres');
+        return;
+    }
+    
+    try {
+        const response = await apiRequest('/api/users/create-teacher', {
+            method: 'POST',
+            body: JSON.stringify({
+                full_name: fullName,
+                email: email,
+                password: password,
+                classes: classes
+            })
+        });
+        
+        let message = `✅ Profesor creado exitosamente!\nNombre: ${response.full_name}\nEmail: ${response.email}\nColegio: ${response.school}`;
+        if (response.assigned_classes && response.assigned_classes.length > 0) {
+            message += `\nClases: ${response.assigned_classes.join(', ')}`;
+        }
+        alert(message);
+        closeTeacherModal();
+        loadUsers();
+    } catch (error) {
+        alert('Error al crear profesor: ' + error.message);
+    }
+}
+
+// Show Teacher Modal
+function showTeacherModal() {
+    const userRole = getCurrentUserRole();
+    
+    // Only show for directors and admins
+    if (userRole !== 'director' && userRole !== 'admin') {
+        alert('Solo directores y administradores pueden crear profesores');
+        return;
+    }
+    
+    document.getElementById('teacherForm').reset();
+    
+    // Load available classes
+    loadClassesForTeacher();
+    
+    // Set school display name
+    const user = JSON.parse(localStorage.getItem('arrivapp_user') || '{}');
+    const school = schools.find(s => s.id === user.school_id);
+    const schoolName = school ? school.name : 'Tu escuela';
+    document.getElementById('teacherSchoolDisplay').textContent = schoolName;
+    
+    document.getElementById('teacherModal').style.display = 'flex';
+}
+
+// Close Teacher Modal
+function closeTeacherModal() {
+    document.getElementById('teacherModal').style.display = 'none';
+}
+
 // Event listeners
 document.getElementById('addUserBtn').addEventListener('click', showAddUserModal);
 document.getElementById('addComedorBtn').addEventListener('click', showComedorModal);
+document.getElementById('createTeacherBtn').addEventListener('click', showTeacherModal);
 document.getElementById('cancelBtn').addEventListener('click', closeModal);
 document.getElementById('cancelComedorBtn').addEventListener('click', closeComedorModal);
+document.getElementById('cancelTeacherBtn').addEventListener('click', closeTeacherModal);
 document.getElementById('comedorForm').addEventListener('submit', (e) => {
     e.preventDefault();
     createComedorUser();
+});
+document.getElementById('teacherForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    createTeacher();
 });
 document.getElementById('role').addEventListener('change', updateSchoolRequirement);
 
@@ -370,6 +483,13 @@ document.getElementById('comedorModal').addEventListener('click', (e) => {
     }
 });
 
+// Close teacher modal when clicking outside
+document.getElementById('teacherModal').addEventListener('click', (e) => {
+    if (e.target.id === 'teacherModal') {
+        closeTeacherModal();
+    }
+});
+
 // Logout function
 function logout() {
     localStorage.removeItem('arrivapp_token');
@@ -378,5 +498,19 @@ function logout() {
 }
 
 // Initialize
-loadSchools();
-loadUsers();
+function initializeUI() {
+    // Show/hide teacher button based on role
+    const user = JSON.parse(localStorage.getItem('arrivapp_user') || '{}');
+    const createTeacherBtn = document.getElementById('createTeacherBtn');
+    
+    if (user.role === 'director' || user.role === 'admin') {
+        createTeacherBtn.style.display = 'block';
+    } else {
+        createTeacherBtn.style.display = 'none';
+    }
+    
+    loadSchools();
+    loadUsers();
+}
+
+initializeUI();

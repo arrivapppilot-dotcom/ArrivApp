@@ -68,6 +68,9 @@
                 Total: <span id="userCount" class="font-bold">0</span> usuarios
             </div>
             <div class="flex gap-3">
+                <button id="createTeacherBtn" class="text-white px-6 py-2 rounded-lg transition font-semibold" style="background-color: #8b5cf6; display: none;">
+                    👨‍🏫 Crear Profesor
+                </button>
                 <button id="addComedorBtn" class="text-white px-6 py-2 rounded-lg transition font-semibold" style="background-color: #f97316;">
                     🍽️ Crear Comedor
                 </button>
@@ -153,6 +156,58 @@
                     </button>
                     <button type="submit" class="text-white px-4 py-2 rounded-lg font-semibold" style="background-color: #10b981;">
                         Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Teacher Modal -->
+    <div id="teacherModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3>👨‍🏫 Crear Perfil de Profesor</h3>
+            <p style="color: #6b7280; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                Los profesores pueden acceder al sistema para consultar asistencia de sus clases asignadas.
+            </p>
+            <form id="teacherForm">
+                <div class="form-group">
+                    <label for="teacherName">Nombre Completo *</label>
+                    <input type="text" id="teacherName" required placeholder="Ej: Juan García López">
+                </div>
+
+                <div class="form-group">
+                    <label for="teacherEmail">Email *</label>
+                    <input type="email" id="teacherEmail" required placeholder="Ej: juan.garcia@school.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="teacherPassword">Contraseña *</label>
+                    <input type="password" id="teacherPassword" required placeholder="mínimo 6 caracteres">
+                    <small class="text-gray-500">Se puede cambiar después desde el perfil</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="teacherClasses">Clases Asignadas</label>
+                    <select id="teacherClasses" multiple style="min-height: 100px;">
+                        <option value="">Seleccionar clases...</option>
+                    </select>
+                    <small class="text-gray-500">Mantén Ctrl/Cmd presionado para seleccionar múltiples clases. Dejar vacío para asignar después.</small>
+                </div>
+
+                <div class="form-group" style="background: #f0fdf4; padding: 1rem; border-radius: 6px; border-left: 4px solid #10b981;">
+                    <p style="font-size: 0.875rem; color: #166534;">
+                        <strong>Acceso:</strong> Inicio de sesión normal<br>
+                        <strong>Permisos:</strong> Consultar asistencia de sus clases<br>
+                        <strong>Escuela:</strong> <span id="teacherSchoolDisplay">Tu escuela</span>
+                    </p>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" id="cancelTeacherBtn" class="btn-secondary px-4 py-2 rounded-lg font-semibold text-gray-800 border-2 border-gray-300" style="background-color: #f3f4f6;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="text-white px-4 py-2 rounded-lg font-semibold" style="background-color: #8b5cf6;">
+                        Crear Profesor
                     </button>
                 </div>
             </form>
