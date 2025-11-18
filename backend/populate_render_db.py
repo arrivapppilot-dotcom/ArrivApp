@@ -21,18 +21,48 @@ if __name__ == "__main__":
     print("Make sure DATABASE_URL points to Render's database.\n")
     
     from app.core.database import SessionLocal
+    from app.models.models import School, Student, CheckIn
     
     # Test database connection
     try:
         db = SessionLocal()
-        from app.models.models import School
         schools = db.query(School).count()
+        students = db.query(Student).count()
+        checkins = db.query(CheckIn).count()
         db.close()
-        print(f"✅ Connected to database with {schools} schools\n")
+        print(f"✅ Connected to database")
+        print(f"   Schools: {schools}")
+        print(f"   Students: {students}")
+        print(f"   Check-ins: {checkins}\n")
     except Exception as e:
         print(f"❌ Failed to connect to database: {e}")
         print("Make sure DATABASE_URL is set correctly.")
         sys.exit(1)
+    
+    # Clear old TEST data to avoid unique constraint violations
+    print("🧹 Cleaning up old TEST data...")
+    try:
+        db = SessionLocal()
+        # Delete all test students (those with student_id starting with TEST)
+        old_test_students = db.query(Student).filter(
+            Student.student_id.like('TEST%')
+        ).count()
+        
+        if old_test_students > 0:
+            db.query(CheckIn).filter(
+                CheckIn.student_id.in_(
+                    db.query(Student.id).filter(Student.student_id.like('TEST%'))
+                )
+            ).delete()
+            db.query(Student).filter(Student.student_id.like('TEST%')).delete()
+            db.commit()
+            print(f"   ✅ Deleted {old_test_students} old TEST students and their check-ins\n")
+        else:
+            print(f"   ℹ️  No old TEST data found\n")
+        db.close()
+    except Exception as e:
+        print(f"   ⚠️  Could not clean old data: {e}")
+        print("   Continuing anyway...\n")
     
     # Run the faker
     manager = TestDataManager()
