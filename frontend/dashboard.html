@@ -407,17 +407,22 @@
             
             try {
                 // Build URL with proper query parameters
-                const url = new URL(`${API_URL}/reports/statistics`, window.location.origin);
+                const url = new URL(`${API_URL}/api/reports/statistics`, window.location.origin);
                 url.searchParams.append('period', 'daily');
                 url.searchParams.append('start_date', today);
                 url.searchParams.append('end_date', today);
+                
+                console.log('[DEBUG] Calling API:', url.toString());
                 
                 const response = await fetch(url.toString(), {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
+                console.log('[DEBUG] Response status:', response.status);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('[DEBUG] API Response:', data);
                     updateDashboard(data);
                 } else {
                     console.error('Failed to load data:', response.status);
@@ -434,10 +439,14 @@
         }
 
         function updateDashboard(data) {
+            console.log('[DEBUG] Dashboard data received:', data);
+            
             const total = data.total_students || 0;
             const present = data.present || 0;
             const late = data.late || 0;
             const absent = total - present;
+            
+            console.log(`[DEBUG] Stats: total=${total}, present=${present}, late=${late}, absent=${absent}`);
             
             document.getElementById('totalStudents').textContent = total;
             document.getElementById('totalPresent').textContent = present;
