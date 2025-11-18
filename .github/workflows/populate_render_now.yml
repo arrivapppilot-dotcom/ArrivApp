@@ -35,7 +35,7 @@ jobs:
       
       - name: Upload test data archive
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: render_db_population_${{ github.run_number }}
           path: backend/test_data_archive/

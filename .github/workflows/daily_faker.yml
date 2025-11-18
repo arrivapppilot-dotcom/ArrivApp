@@ -39,7 +39,7 @@ jobs:
       
       - name: Upload test data archive
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: daily_faker_archive_${{ github.run_number }}
           path: backend/test_data_archive/
