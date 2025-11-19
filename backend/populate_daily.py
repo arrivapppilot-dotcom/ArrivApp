@@ -114,18 +114,13 @@ class TestDataManager:
         print(f"📊 Total students created today: {students_count}")
         return students_count
     
-    def simulate_today_activities(self, students_list: List[Student]) -> Dict:
-        """Simulate check-ins and activities for today"""
-        print("\n🎭 Simulating today's activities...")
-        
-        if not students_list:
-            self.log_warning("No students to simulate activities for")
-            return {}
-        
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    def simulate_day(self, students_list: List[Student]) -> Dict:
+        """Simulate a full day of activities."""
+        # Use UTC now to match database timezone (CheckIn stores utcnow)
+        today_utc = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         
         # Skip weekends
-        if today.weekday() >= 5:
+        if today_utc.weekday() >= 5:
             self.log_warning("Today is a weekend - skipping simulation")
             return {}
         
@@ -139,8 +134,8 @@ class TestDataManager:
         }
         
         for days_offset in [0, 1]:  # Today and yesterday
-            current_date = today - timedelta(days=days_offset)
-            date_str = current_date.strftime("%Y-%m-%d")
+            current_date_utc = today_utc - timedelta(days=days_offset)
+            date_str = current_date_utc.strftime("%Y-%m-%d")
             
             print(f"\n  📅 Simulating {date_str}...")
             
@@ -155,8 +150,8 @@ class TestDataManager:
                 # Check if already has check-in for this date
                 existing = self.db.query(CheckIn).filter(
                     CheckIn.student_id == student.id,
-                    CheckIn.checkin_time >= current_date.replace(hour=0, minute=0, second=0),
-                    CheckIn.checkin_time <= current_date.replace(hour=23, minute=59, second=59)
+                    CheckIn.checkin_time >= current_date_utc.replace(hour=0, minute=0, second=0),
+                    CheckIn.checkin_time <= current_date_utc.replace(hour=23, minute=59, second=59)
                 ).first()
                 
                 if existing:
@@ -174,7 +169,7 @@ class TestDataManager:
                     check_in_minute = random.randint(0, 10 if check_in_hour == 8 else 59)
                     scenarios["present_on_time"] += 1
                 
-                checkin_time = current_date.replace(
+                checkin_time = current_date_utc.replace(
                     hour=check_in_hour,
                     minute=check_in_minute,
                     second=random.randint(0, 59)
@@ -190,7 +185,7 @@ class TestDataManager:
                         checkout_hour = random.randint(12, 13)
                         scenarios["early_checkout"] += 1
                     
-                    checkout_time = current_date.replace(
+                    checkout_time = current_date_utc.replace(
                         hour=checkout_hour,
                         minute=checkout_minute,
                         second=random.randint(0, 59)
@@ -227,11 +222,11 @@ class TestDataManager:
                     
                     justification = Justification(
                         student_id=student.id,
-                        date=current_date.date(),
+                        date=current_date_utc.date(),
                         justification_type=just_type,
                         reason=reason,
                         submitted_by=student.parent_email,
-                        submitted_at=current_date.replace(
+                        submitted_at=current_date_utc.replace(
                             hour=random.randint(6, 8),
                             minute=random.randint(0, 59)
                         ),
@@ -254,9 +249,9 @@ class TestDataManager:
                 
                 absence_notif = AbsenceNotification(
                     student_id=student.id,
-                    notification_date=current_date,
+                    notification_date=current_date_utc,
                     email_sent=email_sent,
-                    email_sent_at=current_date if email_sent else None
+                    email_sent_at=current_date_utc if email_sent else None
                 )
                 
                 self.db.add(absence_notif)
