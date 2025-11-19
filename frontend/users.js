@@ -381,7 +381,13 @@ function getCurrentUserSchool() {
 // Load classes for teacher assignment
 async function loadClassesForTeacher() {
     try {
-        const response = await apiRequest('/api/users/classes');
+        // Add cache-busting headers to ensure fresh response
+        const response = await apiRequest('/api/users/classes', {
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
         const select = document.getElementById('teacherClasses');
         select.innerHTML = '';
         
