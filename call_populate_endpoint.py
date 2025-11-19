@@ -19,7 +19,7 @@ def populate_database():
     # Try with token endpoint (no auth required if token is empty)
     response = requests.post(
         f"{BACKEND_URL}/api/admin/populate-test-data-token",
-        json={"token": POPULATE_TOKEN}
+        params={"token": POPULATE_TOKEN}
     )
     
     if response.status_code != 200:

@@ -155,7 +155,7 @@ async def populate_test_data(current_user = Depends(get_current_admin_user)):
         db.close()
 
 @router.post("/populate-test-data-token")
-async def populate_test_data_token(token: str):
+async def populate_test_data_token(token: str = ""):
     """
     Populate database with test data using token.
     For automated tasks and testing.
@@ -164,6 +164,28 @@ async def populate_test_data_token(token: str):
     if ADMIN_POPULATE_TOKEN and token != ADMIN_POPULATE_TOKEN:
         raise HTTPException(status_code=401, detail="Invalid token")
     
+    db = SessionLocal()
+    try:
+        result = populate_db(db)
+        return {
+            "status": "success",
+            "message": "Database populated successfully",
+            "data": result
+        }
+    
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    finally:
+        db.close()
+
+@router.get("/populate-test-data-simple")
+async def populate_test_data_simple():
+    """
+    Simple GET endpoint to populate database.
+    No authentication required (for testing/cron jobs).
+    WARNING: Only for development/testing environments!
+    """
     db = SessionLocal()
     try:
         result = populate_db(db)
