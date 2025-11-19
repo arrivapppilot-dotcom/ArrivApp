@@ -61,3 +61,15 @@ services:
       name: arrivapp-data
       mountPath: /var/lib/postgresql/data
       sizeGB: 1
+
+  # Daily Cron Job - Populate test data every morning at 6 AM UTC
+  - type: cron
+    name: daily-populate
+    env: python
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "cd backend && python populate_simple.py"
+    schedule: "0 6 * * *"  # 6 AM UTC daily (Madrid is UTC+1, so 7 AM local)
+    envVars:
+      - key: DATABASE_URL
+        sync: false
