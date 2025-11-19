@@ -227,9 +227,9 @@ async def get_statistics(
 ):
     """Get attendance statistics for different periods"""
     
-    # Determine date range
+    # Determine date range - IMPORTANT: CheckIn times are stored in UTC
     if not start_date or not end_date:
-        end = datetime.now()
+        end = datetime.utcnow()  # Use UTC, not local time
         if period == "daily":
             start = end.replace(hour=0, minute=0, second=0, microsecond=0)
         elif period == "weekly":
@@ -237,8 +237,10 @@ async def get_statistics(
         else:  # monthly
             start = end - timedelta(days=30)
     else:
+        # Parse dates as UTC (CheckIn.checkin_time is stored in UTC)
         start = datetime.strptime(start_date, "%Y-%m-%d")
         end = datetime.strptime(end_date, "%Y-%m-%d")
+        # Treat as UTC dates - start at 00:00:00 UTC, end at 23:59:59 UTC
         end = end.replace(hour=23, minute=59, second=59)
     
     # Build query with role-based filtering
