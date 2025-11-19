@@ -8,6 +8,8 @@ import traceback
 from pathlib import Path
 from app.core.config import get_settings
 from app.core.database import engine, Base, SessionLocal
+
+# Version: 2.0.1 - UTC timezone fix for reports endpoint
 from app.routers import auth, students, checkin, schools, users, reports, justifications, comedor
 from app.services.scheduler import start_scheduler, stop_scheduler
 
