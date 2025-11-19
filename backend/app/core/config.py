@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     
     # Application
     APP_NAME: str = "ArrivApp"
-    APP_VERSION: str = "2.0.0"
+    APP_VERSION: str = "2.0.3"
     LATE_THRESHOLD_HOUR: int = 9
     LATE_THRESHOLD_MINUTE: int = 1
     CHECK_ABSENT_TIME: str = "09:10"
