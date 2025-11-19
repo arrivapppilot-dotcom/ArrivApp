@@ -8,7 +8,6 @@ import sys
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal, engine
 from app.models.models import Base, User, UserRole, School
-from app.core.config import settings
 import bcrypt
 
 
