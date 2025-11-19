@@ -270,6 +270,16 @@ async def get_statistics(
     # Calculate statistics
     total_attendance = query.count()
     
+    # DEBUG: Log query details
+    print(f"[DEBUG QUERY] Start: {start} ({start.isoformat()})")
+    print(f"[DEBUG QUERY] End: {end} ({end.isoformat()})")
+    print(f"[DEBUG QUERY] Total attendance found: {total_attendance}")
+    
+    # Sample some CheckIn records to see what we have
+    sample = db.query(CheckIn).limit(3).all()
+    if sample:
+        print(f"[DEBUG QUERY] Sample CheckIn times: {[c.checkin_time for c in sample]}")
+    
     # Present students (checked in) - all records are present
     present = total_attendance
     
