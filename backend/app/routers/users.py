@@ -435,7 +435,6 @@ async def get_classes(
 ):
     """Get list of all classes in current user's school or all if admin."""
     from sqlalchemy import distinct
-    import json
     
     # Query active classes
     query = db.query(distinct(Student.class_name)).filter(Student.is_active == True)
@@ -446,23 +445,11 @@ async def get_classes(
     
     classes = sorted([row[0] for row in query.all()])
     
-    result = {
+    return {
         "classes": classes,
         "school_id": current_user.school_id,
         "user_role": str(current_user.role)
     }
-    
-    # Return with explicit no-cache headers to bypass browser caching
-    return Response(
-        content=json.dumps(result),
-        media_type="application/json",
-        headers={
-            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-            "Pragma": "no-cache",
-            "Expires": "0",
-            "ETag": f'"{hash(str(classes))}"'
-        }
-    )
 
 
 @router.get("/test/director-check")
