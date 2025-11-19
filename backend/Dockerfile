@@ -20,5 +20,8 @@ RUN mkdir -p /app/qr_codes
 # Expose port
 EXPOSE 8000
 
+# Build timestamp for cache busting
+ARG BUILD_DATE=unknown
+
 # Run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
