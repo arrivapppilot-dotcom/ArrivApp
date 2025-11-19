@@ -15,11 +15,11 @@ POPULATE_TOKEN = ""
 def populate_database():
     """Call the populate endpoint"""
     print("📊 Populating Render database with test data...")
+    print("   Calling: GET /api/admin/populate-test-data-simple\n")
     
-    # Try with token endpoint (no auth required if token is empty)
-    response = requests.post(
-        f"{BACKEND_URL}/api/admin/populate-test-data-token",
-        params={"token": POPULATE_TOKEN}
+    # Try simple GET endpoint (no auth required)
+    response = requests.get(
+        f"{BACKEND_URL}/api/admin/populate-test-data-simple"
     )
     
     if response.status_code != 200:
