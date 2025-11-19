@@ -10,7 +10,7 @@ from app.core.config import get_settings
 from app.core.database import engine, Base, SessionLocal
 
 # Version: 2.0.1 - UTC timezone fix for reports endpoint
-from app.routers import auth, students, checkin, schools, users, reports, justifications, comedor
+from app.routers import auth, students, checkin, schools, users, reports, justifications, comedor, admin_tools
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
@@ -175,6 +175,7 @@ app.include_router(checkin.router)
 app.include_router(reports.router)
 app.include_router(justifications.router)
 app.include_router(comedor.router)
+app.include_router(admin_tools.router)
 
 
 # Exception handlers to ensure CORS headers are always sent
