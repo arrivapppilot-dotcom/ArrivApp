@@ -3,6 +3,10 @@
 Simple populate script - creates test data with proper UTC timestamps.
 No timezone issues, just straightforward UTC handling.
 
+Populates whichever database is configured in DATABASE_URL environment variable.
+On Render: Uses Render Postgres database
+Locally: Uses local database (SQLite or Postgres)
+
 Usage:
     python populate_simple.py
 """
@@ -13,6 +17,7 @@ from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Use whatever database is configured (Render or local)
 from app.core.database import SessionLocal
 from app.models.models import (
     School, Student, CheckIn, Justification,
@@ -189,6 +194,14 @@ if __name__ == "__main__":
     print("=" * 70)
     print("🚀 Simple Populate Script")
     print("=" * 70 + "\n")
+    
+    # Show which database is being used
+    db_url = os.getenv("DATABASE_URL", "")
+    if "render" in db_url.lower() or "postgres" in db_url.lower():
+        print("📊 Database: POSTGRES (Render or remote)")
+    else:
+        print("📊 Database: LOCAL (SQLite)")
+    print()
     
     try:
         db = SessionLocal()
