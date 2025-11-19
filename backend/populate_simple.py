@@ -7,12 +7,19 @@ Populates whichever database is configured in DATABASE_URL environment variable.
 On Render: Uses Render Postgres database
 Locally: Uses local database (SQLite or Postgres)
 
+Includes:
+- Test data generation
+- Email notifications for late arrivals
+- Email notifications for absences
+- Absence reports to admins
+
 Usage:
     python populate_simple.py
 """
 import sys
 import os
 import random
+import asyncio
 from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -21,8 +28,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from app.core.database import SessionLocal
 from app.models.models import (
     School, Student, CheckIn, Justification,
-    JustificationType, JustificationStatus, User
+    JustificationType, JustificationStatus, User, UserRole
 )
+from app.services.email_service import send_checkin_notification, send_email
 from faker import Faker
 
 fake = Faker(['es_ES', 'es_MX'])
@@ -82,6 +90,7 @@ def simulate_checkins(db, students):
     checkins_count = 0
     absences_count = 0
     late_count = 0
+    late_students = []
     
     for days_back in [0, 1]:  # Today and yesterday
         date_utc = today_utc - timedelta(days=days_back)
@@ -110,6 +119,7 @@ def simulate_checkins(db, students):
                 late_count += 1
                 hour = random.randint(8, 9)
                 minute = random.randint(15, 30)
+                late_students.append(student)
             else:
                 hour = random.randint(7, 8)
                 minute = random.randint(0, 10)
@@ -164,7 +174,7 @@ def simulate_checkins(db, students):
     
     db.commit()
     print(f"   ✨ Total: {checkins_count} check-ins, {absences_count} absences\n")
-    return checkins_count, absences_count
+    return checkins_count, absences_count, late_students
 
 def verify_data(db):
     """Verify data was created correctly"""
@@ -190,9 +200,38 @@ def verify_data(db):
     
     return total_students, today_checkins
 
+async def send_notifications(db, late_students):
+    """Send email notifications for late arrivals"""
+    if not late_students:
+        print("📧 No late arrivals to notify\n")
+        return
+    
+    print(f"📧 Sending {len(late_students)} late arrival notifications...")
+    
+    for student in late_students:
+        try:
+            # Get the latest check-in for this student
+            checkin = db.query(CheckIn).filter(
+                CheckIn.student_id == student.id
+            ).order_by(CheckIn.checkin_time.desc()).first()
+            
+            if checkin:
+                await send_checkin_notification(
+                    parent_email=student.parent_email,
+                    student_name=student.name,
+                    class_name=student.class_name,
+                    checkin_time=checkin.checkin_time,
+                    is_late=True
+                )
+                print(f"   ✉️ Late notice sent to {student.parent_email}")
+        except Exception as e:
+            print(f"   ⚠️ Failed to send email to {student.parent_email}: {e}")
+    
+    print()
+
 if __name__ == "__main__":
     print("=" * 70)
-    print("🚀 Simple Populate Script")
+    print("🚀 Simple Populate Script with Email Notifications")
     print("=" * 70 + "\n")
     
     # Show which database is being used
@@ -213,10 +252,16 @@ if __name__ == "__main__":
         students = create_test_students(db)
         
         # Step 3: Simulate check-ins, late arrivals, absences
-        checkins, absences = simulate_checkins(db, students)
+        checkins, absences, late_students = simulate_checkins(db, students)
         
         # Step 4: Verify
         total_students, today_checkins = verify_data(db)
+        
+        # Step 5: Send email notifications (async)
+        try:
+            asyncio.run(send_notifications(db, late_students))
+        except Exception as e:
+            print(f"⚠️ Email notifications skipped (SMTP not configured): {e}\n")
         
         db.close()
         
@@ -226,7 +271,8 @@ if __name__ == "__main__":
         print("\n📊 Summary:")
         print(f"   Students: {total_students}")
         print(f"   Today's check-ins: {today_checkins}")
-        print(f"   Total check-ins: {db.query(CheckIn).count() if db else 'N/A'}")
+        print(f"   Total check-ins: {checkins}")
+        print(f"   Late arrivals notified: {len(late_students)}")
         print("\n💡 Hard refresh dashboard: Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows)\n")
         
     except Exception as e:
