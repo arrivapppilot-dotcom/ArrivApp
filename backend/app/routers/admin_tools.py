@@ -5,7 +5,7 @@ Only accessible to admins (safety feature).
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.deps import get_current_admin_user
 from app.core.database import SessionLocal
-from app.models.models import Student, CheckIn, Justification, JustificationType, JustificationStatus, School
+from app.models.models import Student, CheckIn, Justification, JustificationType, JustificationStatus, School, AbsenceNotification
 from datetime import datetime, timedelta
 import random
 from faker import Faker
@@ -26,15 +26,21 @@ def populate_db(db):
     if not schools:
         raise HTTPException(status_code=400, detail="No schools found")
     
-    # Clean old TEST data
+    # Clean old TEST data - delete in correct order (respecting foreign keys)
     old_count = db.query(Student).filter(Student.student_id.like('TEST%')).count()
     if old_count > 0:
-        db.query(CheckIn).filter(
-            CheckIn.student_id.in_(
-                db.query(Student.id).filter(Student.student_id.like('TEST%'))
-            )
-        ).delete()
-        db.query(Student).filter(Student.student_id.like('TEST%')).delete()
+        # Delete in order: CheckIn -> Justification -> AbsenceNotification -> Student
+        student_ids = db.query(Student.id).filter(Student.student_id.like('TEST%')).all()
+        student_id_list = [s[0] for s in student_ids]
+        
+        if student_id_list:
+            # Delete check-ins
+            db.query(CheckIn).filter(CheckIn.student_id.in_(student_id_list)).delete()
+            # Delete justifications
+            db.query(Justification).filter(Justification.student_id.in_(student_id_list)).delete()
+            # Delete students (absence_notifications have CASCADE delete)
+            db.query(Student).filter(Student.id.in_(student_id_list)).delete()
+        
         db.commit()
     
     # Create fresh test students
