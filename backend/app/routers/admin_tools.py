@@ -38,7 +38,9 @@ def populate_db(db):
             db.query(CheckIn).filter(CheckIn.student_id.in_(student_id_list)).delete()
             # Delete justifications
             db.query(Justification).filter(Justification.student_id.in_(student_id_list)).delete()
-            # Delete students (absence_notifications have CASCADE delete)
+            # Delete absence notifications
+            db.query(AbsenceNotification).filter(AbsenceNotification.student_id.in_(student_id_list)).delete()
+            # Delete students
             db.query(Student).filter(Student.id.in_(student_id_list)).delete()
         
         db.commit()
