@@ -739,7 +739,7 @@ class TestDataManager:
             all_students = self.db.query(Student).all()
             
             # Step 3: Simulate activities for today and yesterday
-            scenarios = self.simulate_today_activities(all_students)
+            scenarios = self.simulate_day(all_students)
             
             # Step 4: Test all reports
             self.test_all_reports()
