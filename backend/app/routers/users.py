@@ -445,11 +445,8 @@ async def get_classes(
     
     classes = sorted([row[0] for row in query.all()])
     
-    return {
-        "classes": classes,
-        "school_id": current_user.school_id,
-        "user_role": str(current_user.role)
-    }
+    # Return as dict - FastAPI will serialize this automatically
+    return {"classes": classes}
 
 
 @router.get("/test/director-check")
