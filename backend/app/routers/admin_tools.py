@@ -222,3 +222,33 @@ async def populate_test_data_simple():
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
     finally:
         db.close()
+
+
+@router.get("/health-check")
+async def health_check():
+    """
+    Debug endpoint to check database status (no auth required).
+    WARNING: Only for development/debugging!
+    """
+    db = SessionLocal()
+    try:
+        schools = db.query(School).all()
+        students = db.query(Student).all()
+        checkins = db.query(CheckIn).all()
+        
+        return {
+            "status": "healthy",
+            "database": {
+                "schools": len(schools),
+                "students": len(students),
+                "checkins": len(checkins),
+                "school_names": [s.name for s in schools]
+            }
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+    finally:
+        db.close()
