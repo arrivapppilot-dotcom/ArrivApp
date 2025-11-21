@@ -292,6 +292,33 @@
             await loadSchools();
             await loadDashboardData();
             
+            // Add event listener for school filter changes
+            const schoolFilter = document.getElementById('school-filter');
+            if (schoolFilter) {
+                schoolFilter.addEventListener('change', () => {
+                    console.log('[DEBUG] School filter changed to:', schoolFilter.value);
+                    loadDashboardData();
+                });
+            }
+            
+            // Add event listener for class filter changes
+            const classFilter = document.getElementById('class-filter');
+            if (classFilter) {
+                classFilter.addEventListener('change', () => {
+                    console.log('[DEBUG] Class filter changed to:', classFilter.value);
+                    loadDashboardData();
+                });
+            }
+            
+            // Add event listener for date changes
+            const datePicker = document.getElementById('date-picker');
+            if (datePicker) {
+                datePicker.addEventListener('change', () => {
+                    console.log('[DEBUG] Date changed to:', datePicker.value);
+                    loadDashboardData();
+                });
+            }
+            
             // Auto-refresh dashboard data every 30 seconds
             setInterval(async () => {
                 console.log('Auto-refreshing dashboard data...');
@@ -448,12 +475,30 @@
             const today = document.getElementById('date-picker').value || new Date().toISOString().split('T')[0];
             document.getElementById('date-picker').value = today;
             
+            // Get filter values
+            const schoolFilter = document.getElementById('school-filter');
+            const classFilter = document.getElementById('class-filter');
+            const selectedSchool = schoolFilter ? schoolFilter.value : '';
+            const selectedClass = classFilter ? classFilter.value : '';
+            
             try {
                 // Build URL with proper query parameters
                 const url = new URL(`${API_URL}/reports/statistics`, window.location.origin);
                 url.searchParams.append('period', 'daily');
                 url.searchParams.append('start_date', today);
                 url.searchParams.append('end_date', today);
+                
+                // Add school filter if selected
+                if (selectedSchool) {
+                    url.searchParams.append('school_id', selectedSchool);
+                    console.log('[DEBUG] Filtering by school:', selectedSchool);
+                }
+                
+                // Add class filter if selected
+                if (selectedClass) {
+                    url.searchParams.append('class_name', selectedClass);
+                    console.log('[DEBUG] Filtering by class:', selectedClass);
+                }
                 
                 console.log('[DEBUG] Calling API:', url.toString());
                 

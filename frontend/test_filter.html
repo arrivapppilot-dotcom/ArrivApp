@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test School Filter</title>
+</head>
+<body>
+    <h1>Test School Filter Display</h1>
+    <div id="test-output" style="white-space: pre; font-family: monospace; background: #f0f0f0; padding: 1rem; border-radius: 4px; margin: 1rem 0;"></div>
+    
+    <script>
+        const API_URL = 'https://arrivapp-backend.onrender.com/api';
+        const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTczMzI0ODExNX0.h8bH8JW4e0AzpJM5-rW7XnVnpCwKoHoGFhBKPFJHKLE'; // Test token
+        
+        async function test() {
+            const output = document.getElementById('test-output');
+            let log = '';
+            
+            log += '=== Testing School Filter ===\n\n';
+            
+            // Check if school filter container exists
+            const container = document.getElementById('school-filter-container');
+            log += `1. School filter container found: ${container ? 'YES' : 'NO'}\n`;
+            if (container) {
+                log += `   - Has "hidden" class: ${container.classList.contains('hidden')}\n`;
+                log += `   - Display style: ${window.getComputedStyle(container).display}\n`;
+            }
+            
+            // Try to get user info
+            log += `\n2. Fetching user info...\n`;
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const user = await response.json();
+                    log += `   - Username: ${user.username}\n`;
+                    log += `   - Role: ${user.role}\n`;
+                } else {
+                    log += `   - Error: ${response.status}\n`;
+                }
+            } catch (error) {
+                log += `   - Exception: ${error.message}\n`;
+            }
+            
+            // Simulate what checkPermissions does
+            log += `\n3. Simulating checkPermissions()...\n`;
+            if (container && container.classList.contains('hidden')) {
+                log += `   - Would remove "hidden" class\n`;
+                container.classList.remove('hidden');
+                log += `   - After removal, display: ${window.getComputedStyle(container).display}\n`;
+            }
+            
+            output.textContent = log;
+        }
+        
+        // Run test when page loads
+        window.addEventListener('load', test);
+    </script>
+</body>
+</html>
