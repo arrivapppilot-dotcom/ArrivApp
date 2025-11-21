@@ -302,6 +302,10 @@ async def get_statistics(
     elif school_id and current_user.role == UserRole.admin:
         student_query = student_query.filter(Student.school_id == school_id)
     
+    # Filter by class
+    if class_name:
+        student_query = student_query.filter(Student.class_name == class_name)
+    
     total_students = student_query.filter(Student.is_active == True).count()
     
     # DEBUG: Log computed statistics (after total_students is calculated)
