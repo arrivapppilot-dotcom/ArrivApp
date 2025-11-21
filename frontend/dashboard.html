@@ -290,6 +290,7 @@
             setInterval(updateCurrentTime, 1000);
             await checkPermissions();
             await loadSchools();
+            await loadClasses();
             await loadDashboardData();
             
             // Add event listener for school filter changes
@@ -467,6 +468,35 @@
                 }
             } catch (error) {
                 console.error('Error loading schools:', error);
+            }
+        }
+
+        async function loadClasses() {
+            const token = localStorage.getItem('arrivapp_token');
+            try {
+                const response = await fetch(`${API_URL}/checkin/classes`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const classes = await response.json();
+                    const classSelect = document.getElementById('class-filter');
+                    if (classSelect) {
+                        classSelect.innerHTML = '<option value="">Todas las clases</option>';
+                        classes.forEach(className => {
+                            const option = document.createElement('option');
+                            option.value = className;
+                            option.textContent = className;
+                            classSelect.appendChild(option);
+                        });
+                        console.log('[DEBUG] Loaded', classes.length, 'classes');
+                    }
+                } else {
+                    console.error('Failed to load classes:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error details:', errorText);
+                }
+            } catch (error) {
+                console.error('Error loading classes:', error);
             }
         }
 
