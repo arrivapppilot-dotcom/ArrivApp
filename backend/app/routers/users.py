@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
-from app.core.deps import get_current_admin_user, get_current_director_or_admin
+from app.core.deps import get_current_admin_user, get_current_director_or_admin, get_current_active_user
 from app.models.models import User, School, UserRole, TeacherClassAssignment, Student
 from app.models.schemas import (
     User as UserSchema, 
@@ -431,7 +431,7 @@ async def create_teacher(
 @router.get("/classes")
 async def get_classes(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_director_or_admin)
+    current_user: User = Depends(get_current_active_user)
 ):
     """Get list of all classes in current user's school or all if admin."""
     from sqlalchemy import distinct
@@ -439,8 +439,9 @@ async def get_classes(
     # Query active classes
     query = db.query(distinct(Student.class_name)).filter(Student.is_active == True)
     
-    # Filter by school if director
-    if current_user.role == UserRole.director and current_user.school_id:
+    # Filter by school for directors and teachers (only see their own school)
+    # Admins see all classes
+    if current_user.role in [UserRole.director, UserRole.teacher] and current_user.school_id:
         query = query.filter(Student.school_id == current_user.school_id)
     
     classes = sorted([row[0] for row in query.all()])
