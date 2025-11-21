@@ -114,24 +114,24 @@
         <!-- Filters -->
         <div class="section">
             <div class="section-title">🔍 Filtros</div>
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
-                <div style="flex: 1; min-width: 200px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end;">
+                <div>
                     <label style="font-size: 0.875rem; color: #6b7280; display: block; margin-bottom: 0.25rem;">Seleccionar Fecha</label>
                     <input type="date" id="date-picker" style="padding: 0.5rem 1rem; border: 2px solid #d1d5db; border-radius: 6px; width: 100%;">
                 </div>
-                <div style="flex: 1; min-width: 200px;">
+                <div>
                     <label style="font-size: 0.875rem; color: #6b7280; display: block; margin-bottom: 0.25rem;">Clase</label>
                     <select id="class-filter" style="padding: 0.5rem 1rem; border: 2px solid #d1d5db; border-radius: 6px; width: 100%;">
                         <option value="">Todas las clases</option>
                     </select>
                 </div>
-                <div style="flex: 1; min-width: 200px;" id="school-filter-container" class="hidden">
+                <div id="school-filter-container" class="hidden">
                     <label style="font-size: 0.875rem; color: #6b7280; display: block; margin-bottom: 0.25rem;">Colegio</label>
                     <select id="school-filter" style="padding: 0.5rem 1rem; border: 2px solid #d1d5db; border-radius: 6px; width: 100%;">
                         <option value="">Todos los colegios</option>
                     </select>
                 </div>
-                <button style="padding: 0.5rem 1.5rem; background: #667eea; color: white; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; margin-top: 1.5rem; transition: background 0.3s;" onmouseover="this.style.background='#5558d8'" onmouseout="this.style.background='#667eea'" onclick="fetchDashboardData()">Filtrar</button>
+                <button style="padding: 0.5rem 1.5rem; background: #667eea; color: white; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; transition: background 0.3s; width: 100%;" onmouseover="this.style.background='#5558d8'" onmouseout="this.style.background='#667eea'" onclick="loadDashboardData()">Filtrar</button>
             </div>
         </div>
 
@@ -378,17 +378,33 @@
                         // Admin sees everything
                         if (usersBtn) usersBtn.style.display = 'inline-block';
                         if (schoolsBtn) schoolsBtn.style.display = 'inline-block';
+                        
+                        // Show school filter for admin
+                        const schoolFilterContainer = document.getElementById('school-filter-container');
+                        if (schoolFilterContainer) {
+                            schoolFilterContainer.classList.remove('hidden');
+                            console.log('[DEBUG] School filter container shown for admin');
+                        } else {
+                            console.error('[ERROR] School filter container not found!');
+                        }
                     } else if (role === 'director') {
                         // Director sees users and reports for their school
                         if (usersBtn) usersBtn.style.display = 'inline-block';
                         if (schoolsBtn) schoolsBtn.style.display = 'none';
+                        
+                        // Show school filter for director
+                        const schoolFilterContainer = document.getElementById('school-filter-container');
+                        if (schoolFilterContainer) {
+                            schoolFilterContainer.classList.remove('hidden');
+                            console.log('[DEBUG] School filter container shown for director');
+                        }
                     } else if (role === 'teacher') {
                         // Teacher only sees reports and students
                         if (usersBtn) usersBtn.style.display = 'none';
                         if (schoolsBtn) schoolsBtn.style.display = 'none';
                     }
                     
-                    console.log(`User role: ${role}, buttons visibility updated`);
+                    console.log(`[DEBUG] User role: ${role}, buttons visibility updated`);
                 } else {
                     console.error('Failed to check permissions:', response.status);
                     const errorText = await response.text();
