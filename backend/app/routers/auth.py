@@ -158,3 +158,25 @@ async def reset_admin_password(new_password: str, db: Session = Depends(get_db))
         "username": "admin",
         "password": new_password
     }
+
+
+@router.post("/set-admin-flag")
+async def set_admin_flag(db: Session = Depends(get_db)):
+    """Emergency endpoint to set is_admin flag for admin user (no auth required for setup)."""
+    admin = db.query(User).filter(User.username == "admin").first()
+    
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin user not found"
+        )
+    
+    # Set admin flag
+    admin.is_admin = True
+    db.commit()
+    
+    return {
+        "message": "Admin flag set successfully",
+        "username": "admin",
+        "is_admin": admin.is_admin
+    }
