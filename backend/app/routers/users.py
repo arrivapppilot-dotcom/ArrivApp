@@ -291,19 +291,27 @@ async def create_comedor_user(
 async def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_admin: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_director_or_admin)
 ):
-    """Delete a user (admin only)."""
+    """Delete a user (admin only, or director can delete teachers from their school)."""
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Prevent admin from deleting themselves
-    if db_user.id == current_admin.id:
+    # Prevent user from deleting themselves
+    if db_user.id == current_user.id:
         raise HTTPException(
             status_code=400, 
             detail="Cannot delete your own account"
         )
+    
+    # Director can only delete teachers from their own school
+    if current_user.role == UserRole.director:
+        if db_user.role != UserRole.teacher or db_user.school_id != current_user.school_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Directors can only delete teachers from their own school"
+            )
     
     db.delete(db_user)
     db.commit()
