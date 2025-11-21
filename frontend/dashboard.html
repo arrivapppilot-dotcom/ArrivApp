@@ -415,21 +415,48 @@
                         } else {
                             console.error('[ERROR] School filter container not found!');
                         }
+                        
+                        // Show class filter for admin
+                        const classFilterContainer = document.getElementById('class-filter').parentElement;
+                        if (classFilterContainer) {
+                            classFilterContainer.style.display = 'block';
+                            console.log('[DEBUG] Class filter shown for admin');
+                        }
                     } else if (role === 'director') {
                         // Director sees users and reports for their school
                         if (usersBtn) usersBtn.style.display = 'inline-block';
                         if (schoolsBtn) schoolsBtn.style.display = 'none';
                         
-                        // Show school filter for director
+                        // Hide school filter for director (they only work with their own school)
                         const schoolFilterContainer = document.getElementById('school-filter-container');
                         if (schoolFilterContainer) {
-                            schoolFilterContainer.classList.remove('hidden');
-                            console.log('[DEBUG] School filter container shown for director');
+                            schoolFilterContainer.classList.add('hidden');
+                            console.log('[DEBUG] School filter hidden for director');
+                        }
+                        
+                        // Show class filter for director
+                        const classFilterContainer = document.getElementById('class-filter').parentElement;
+                        if (classFilterContainer) {
+                            classFilterContainer.style.display = 'block';
+                            console.log('[DEBUG] Class filter shown for director');
                         }
                     } else if (role === 'teacher') {
                         // Teacher only sees reports and students
                         if (usersBtn) usersBtn.style.display = 'none';
                         if (schoolsBtn) schoolsBtn.style.display = 'none';
+                        
+                        // Hide school filter for teacher
+                        const schoolFilterContainer = document.getElementById('school-filter-container');
+                        if (schoolFilterContainer) {
+                            schoolFilterContainer.classList.add('hidden');
+                        }
+                        
+                        // Hide class filter for teacher
+                        const classFilterContainer = document.getElementById('class-filter').parentElement;
+                        if (classFilterContainer) {
+                            classFilterContainer.style.display = 'none';
+                            console.log('[DEBUG] Class filter hidden for teacher');
+                        }
                     }
                     
                     console.log(`[DEBUG] User role: ${role}, buttons visibility updated`);
