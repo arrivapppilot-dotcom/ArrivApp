@@ -12,6 +12,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
+        .hidden { display: none; }
         .header { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 1rem 1.5rem; }
         .header-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
         .logo { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
@@ -116,15 +117,21 @@
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
                 <div style="flex: 1; min-width: 200px;">
                     <label style="font-size: 0.875rem; color: #6b7280; display: block; margin-bottom: 0.25rem;">Seleccionar Fecha</label>
-                    <input type="date" id="dateFilter" style="padding: 0.5rem 1rem; border: 2px solid #d1d5db; border-radius: 6px; width: 100%;">
+                    <input type="date" id="date-picker" style="padding: 0.5rem 1rem; border: 2px solid #d1d5db; border-radius: 6px; width: 100%;">
                 </div>
                 <div style="flex: 1; min-width: 200px;">
+                    <label style="font-size: 0.875rem; color: #6b7280; display: block; margin-bottom: 0.25rem;">Clase</label>
+                    <select id="class-filter" style="padding: 0.5rem 1rem; border: 2px solid #d1d5db; border-radius: 6px; width: 100%;">
+                        <option value="">Todas las clases</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 200px;" id="school-filter-container" class="hidden">
                     <label style="font-size: 0.875rem; color: #6b7280; display: block; margin-bottom: 0.25rem;">Colegio</label>
-                    <select id="schoolFilter" style="padding: 0.5rem 1rem; border: 2px solid #d1d5db; border-radius: 6px; width: 100%;">
+                    <select id="school-filter" style="padding: 0.5rem 1rem; border: 2px solid #d1d5db; border-radius: 6px; width: 100%;">
                         <option value="">Todos los colegios</option>
                     </select>
                 </div>
-                <button style="padding: 0.5rem 1.5rem; background: #667eea; color: white; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; margin-top: 1.5rem; transition: background 0.3s;" onmouseover="this.style.background='#5558d8'" onmouseout="this.style.background='#667eea'" onclick="applyFilters()">Filtrar</button>
+                <button style="padding: 0.5rem 1.5rem; background: #667eea; color: white; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; margin-top: 1.5rem; transition: background 0.3s;" onmouseover="this.style.background='#5558d8'" onmouseout="this.style.background='#667eea'" onclick="fetchDashboardData()">Filtrar</button>
             </div>
         </div>
 
@@ -419,8 +426,8 @@
 
         async function loadDashboardData() {
             const token = localStorage.getItem('arrivapp_token');
-            const today = document.getElementById('dateFilter').value || new Date().toISOString().split('T')[0];
-            document.getElementById('dateFilter').value = today;
+            const today = document.getElementById('date-picker').value || new Date().toISOString().split('T')[0];
+            document.getElementById('date-picker').value = today;
             
             try {
                 // Build URL with proper query parameters
@@ -489,7 +496,7 @@
 
         async function loadTableData() {
             const token = localStorage.getItem('arrivapp_token');
-            const today = document.getElementById('dateFilter').value || new Date().toISOString().split('T')[0];
+            const today = document.getElementById('date-picker').value || new Date().toISOString().split('T')[0];
             
             try {
                 // Fetch attendance with absences (includes both checked-in and absent students)
