@@ -21,10 +21,24 @@ ADMIN_POPULATE_TOKEN = os.getenv("ADMIN_POPULATE_TOKEN", "")
 
 def populate_db(db):
     """Shared database population logic"""
-    # Get schools
+    # Get schools or create defaults if missing
     schools = db.query(School).all()
     if not schools:
-        raise HTTPException(status_code=400, detail="No schools found")
+        print("⚠️ No schools found. Creating default schools...")
+        default_schools = [
+            {"name": "Colegio San José", "contact_email": "info@sanjose.es"},
+            {"name": "Instituto Técnico Madrid", "contact_email": "info@tecmadrid.es"},
+            {"name": "Colegio Montessori", "contact_email": "info@montessori.es"},
+            {"name": "Escuela Bilingüe", "contact_email": "info@bilingue.es"},
+        ]
+        
+        for school_data in default_schools:
+            school = School(**school_data)
+            db.add(school)
+        
+        db.commit()
+        schools = db.query(School).all()
+        print(f"✅ Created {len(schools)} default schools")
     
     # Clean old TEST data - delete in correct order (respecting foreign keys)
     old_count = db.query(Student).filter(Student.student_id.like('TEST%')).count()
