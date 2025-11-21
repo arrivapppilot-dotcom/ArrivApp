@@ -407,13 +407,16 @@
                 });
                 if (response.ok) {
                     const schools = await response.json();
-                    const schoolSelect = document.getElementById('schoolFilter');
-                    schools.forEach(school => {
-                        const option = document.createElement('option');
-                        option.value = school.id;
-                        option.textContent = school.name;
-                        schoolSelect.appendChild(option);
-                    });
+                    const schoolSelect = document.getElementById('school-filter');
+                    if (schoolSelect) {
+                        schoolSelect.innerHTML = '<option value="">Todos los colegios</option>';
+                        schools.forEach(school => {
+                            const option = document.createElement('option');
+                            option.value = school.id;
+                            option.textContent = school.name;
+                            schoolSelect.appendChild(option);
+                        });
+                    }
                 } else {
                     console.error('Failed to load schools:', response.status);
                     const errorText = await response.text();
