@@ -96,38 +96,59 @@ Sistema completo de gestión de asistencia escolar con códigos QR, diseñado pa
 * Validación de tiempo mínimo de permanencia
 * Alertas de salida anticipada
 
+### Documentación
+
+* 📖 **[API User Guide](https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_USER_GUIDE.md)** - Guía completa de uso de la API con ejemplos
+* 🔍 **[Error Codes Reference](https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_ERROR_CODES.md)** - Lista completa de códigos de error y soluciones
+
+### Cómo Empezar
+
+1. **Autenticación**: Usa el endpoint `/api/auth/login` para obtener un token JWT
+2. **Obtén Escuelas**: Usa `/api/schools/` para listar todas las escuelas
+3. **Explora Datos**: Usa los otros endpoints para obtener estudiantes, asistencias, etc.
+
 ### Autores
 Desarrollado para facilitar la gestión de asistencia escolar de forma moderna y eficiente.
+
+**Versión:** 2.0.3 | **Última actualización:** Noviembre 21, 2025
 """
 
 tags_metadata = [
     {
         "name": "Authentication",
-        "description": "Operaciones de autenticación y gestión de sesiones. Incluye login, logout y verificación de usuario actual.",
+        "description": "Operaciones de autenticación y gestión de sesiones. Incluye login, logout y verificación de usuario actual. Devuelve JWT token para usar en otros endpoints.",
     },
     {
         "name": "Users",
-        "description": "Gestión de usuarios del sistema (Admins, Directores, Profesores). Solo administradores pueden crear y modificar usuarios.",
+        "description": "Gestión de usuarios del sistema (Admins, Directores, Profesores). Solo administradores pueden crear y modificar usuarios. Incluye asignación de roles y permisos.",
     },
     {
         "name": "Schools",
-        "description": "Gestión de colegios/escuelas. Incluye creación, edición, listado y gestión de estudiantes por colegio.",
+        "description": "Gestión de colegios/escuelas. Incluye creación, edición, listado y gestión de estudiantes por colegio. Acceso filtrado según el rol del usuario.",
     },
     {
         "name": "Students",
-        "description": "Gestión de estudiantes. Incluye registro, edición, generación de códigos QR y carga masiva mediante CSV.",
+        "description": "Gestión de estudiantes. Incluye registro, edición, generación de códigos QR y carga masiva mediante CSV. Vinculados a colegios específicos.",
     },
     {
         "name": "Check-in",
-        "description": "Sistema de registro de entrada/salida mediante códigos QR. Incluye dashboard de asistencia, detección de retrasos y salidas anticipadas.",
+        "description": "Sistema de registro de entrada/salida mediante códigos QR. Incluye dashboard de asistencia, detección de retrasos y salidas anticipadas. Registra todos los eventos de asistencia.",
     },
     {
         "name": "Reports",
-        "description": "Generación de reportes de asistencia. Exportación en CSV y estadísticas detalladas por fecha, colegio y clase.",
+        "description": "Generación de reportes de asistencia. Exportación en CSV y estadísticas detalladas por fecha, colegio y clase. Incluye análisis de tendencias.",
     },
     {
         "name": "Justifications",
-        "description": "Sistema de justificación de ausencias. Permite a los padres notificar ausencias mediante formulario público validado por email.",
+        "description": "Sistema de justificación de ausencias. Permite a padres notificar ausencias mediante formulario validado por email. Directores pueden aprobar/rechazar justificaciones.",
+    },
+    {
+        "name": "Admin Tools",
+        "description": "Herramientas administrativas para gestión del sistema. Incluye endpoint para popular base de datos con datos de prueba para desarrollo y testing.",
+    },
+    {
+        "name": "Comedor (Kitchen)",
+        "description": "Gestión de servicio de comedor escolar. Incluye planificación de menús, necesidades dietéticas y asistencia a comedor.",
     },
 ]
 
@@ -232,8 +253,13 @@ async def root():
     
     **Información retornada:**
     - Nombre y versión de la aplicación
-    - Link a la documentación interactiva
+    - Links a documentación interactiva e histórica
     - Estado del servicio
+    - Características disponibles
+    
+    **Documentación Completa:**
+    - 📖 [API User Guide](https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_USER_GUIDE.md)
+    - 🔍 [Error Codes Reference](https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_ERROR_CODES.md)
     """
     return {
         "message": "ArrivApp API - Sistema Multi-Colegio",
@@ -241,6 +267,12 @@ async def root():
         "docs": "/docs",
         "redoc": "/redoc",
         "status": "running",
+        "documentation": {
+            "swagger": "/docs",
+            "redoc": "/redoc",
+            "user_guide": "https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_USER_GUIDE.md",
+            "error_codes": "https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_ERROR_CODES.md"
+        },
         "features": [
             "Multi-School Management",
             "QR Code Check-in/Check-out",
