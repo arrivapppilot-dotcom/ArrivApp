@@ -58,21 +58,27 @@ def create_test_students(db):
     
     schools = db.query(School).all()
     if not schools:
-        print("   ⚠️ No schools found. Creating default schools...")
-        default_schools = [
+        print("   ⚠️ No schools found. Restoring production schools...")
+        # The 9 schools from production database
+        production_schools = [
+            {"name": "Default School", "contact_email": "default@school.es"},
             {"name": "Colegio San José", "contact_email": "info@sanjose.es"},
+            {"name": "Escuela Primaria Norte", "contact_email": "info@norte.es"},
             {"name": "Instituto Técnico Madrid", "contact_email": "info@tecmadrid.es"},
             {"name": "Colegio Montessori", "contact_email": "info@montessori.es"},
             {"name": "Escuela Bilingüe", "contact_email": "info@bilingue.es"},
+            {"name": "Colegio La Paz", "contact_email": "info@lapaz.es"},
+            {"name": "Escuela Primaria Sur", "contact_email": "info@sur.es"},
+            {"name": "Instituto Científico", "contact_email": "info@cientifico.es"},
         ]
         
-        for school_data in default_schools:
+        for school_data in production_schools:
             school = School(**school_data)
             db.add(school)
         
         db.commit()
         schools = db.query(School).all()
-        print(f"   ✅ Created {len(schools)} default schools\n")
+        print(f"   ✅ Restored {len(schools)} production schools: {[s.name for s in schools]}\n")
     
     students_created = []
     for school in schools:
