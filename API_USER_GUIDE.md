@@ -22,18 +22,41 @@ ArrivApp is a multi-school attendance management system with a comprehensive RES
 
 ## Authentication
 
-### Login & Get Access Token
+### Authentication Type: Bearer Token (JWT)
 
-All API requests require a JWT (JSON Web Token) authentication token, except for public endpoints.
+**ArrivApp uses JWT (JSON Web Token) authentication with Bearer token scheme.**
+
+| Property | Value |
+|----------|-------|
+| **Type** | Bearer Token (RFC 6750) |
+| **Standard** | JWT (JSON Web Token - RFC 7519) |
+| **Algorithm** | HS256 (HMAC with SHA-256) |
+| **Scheme** | `Authorization: Bearer {token}` |
+| **Token Lifetime** | 24 hours (configurable) |
+| **Refresh** | Optional refresh token endpoint available |
+
+### How Bearer Token Authentication Works
+
+1. **Client sends credentials** → Username/Password via login endpoint
+2. **Server generates JWT token** → Signed with secret key, contains user claims
+3. **Client includes token in requests** → `Authorization: Bearer {token}`
+4. **Server verifies signature** → Decodes token, validates claims
+5. **Request proceeds if valid** → Otherwise returns 401 Unauthorized
+
+### Step 1: Login & Get Access Token
+
+All API requests require a JWT (JSON Web Token) authentication token, except for public endpoints (login, init-admin, etc.).
 
 **Endpoint:** `POST /api/auth/login`
+
+**Authentication Method:** Username + Password (Basic credentials in request body)
 
 **Request:**
 ```bash
 curl -X POST https://arrivapp-backend.onrender.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "your-email@example.com",
+    "username": "admin",
     "password": "your-password"
   }'
 ```
@@ -41,26 +64,127 @@ curl -X POST https://arrivapp-backend.onrender.com/api/auth/login \
 **Response:**
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer",
-  "user": {
-    "id": 1,
-    "email": "admin@example.com",
-    "full_name": "Administrator",
-    "role": "admin",
-    "school_id": null
-  }
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsInNjaG9vbF9pZCI6bnVsbCwiZXhwIjoxNjM3NjQ4MDAwfQ.abc123...",
+  "token_type": "bearer"
 }
 ```
 
-### Using the Token
+**Token Structure (JWT Format):**
+```
+Header.Payload.Signature
 
-Include the token in all subsequent requests:
+Header: {
+  "alg": "HS256",
+  "typ": "JWT"
+}
+
+Payload: {
+  "sub": "admin",           // Username/subject
+  "role": "admin",          // User role
+  "school_id": null,        // Associated school
+  "exp": 1637648000         // Expiration time (Unix timestamp)
+}
+
+Signature: HMACSHA256(base64UrlEncode(header) + "." + base64UrlEncode(payload))
+```
+
+### Step 2: Using the Token (Bearer Scheme)
+
+Include the token in the `Authorization` header using the Bearer scheme:
 
 ```bash
 curl -X GET https://arrivapp-backend.onrender.com/api/students/ \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer {ACCESS_TOKEN}"
 ```
+
+**Header Format:**
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Important:** 
+- Include the word "Bearer" before the token (case-sensitive)
+- The token is NOT base64-encoded when transmitted (it's already self-contained)
+- All authenticated endpoints require this header
+
+### Token Validation & Expiration
+
+Tokens are automatically validated on each request:
+
+**When a token expires (after 24 hours):**
+- API returns `401 Unauthorized` with message "token expired"
+- Client must login again to get a new token
+- Old token is invalidated
+
+**When a token is invalid:**
+- API returns `401 Unauthorized` with message "Could not validate credentials"
+- Check that token is correctly formatted with "Bearer " prefix
+- Verify token hasn't been modified
+
+### Example: Complete Authentication Flow
+
+```python
+# Python example
+import requests
+import json
+
+API_URL = "https://arrivapp-backend.onrender.com"
+
+# Step 1: Login to get token
+login_response = requests.post(
+    f"{API_URL}/api/auth/login",
+    json={"username": "admin", "password": "password123"}
+)
+
+token = login_response.json()["access_token"]
+print(f"✅ Got token: {token[:50]}...")
+
+# Step 2: Use token for authenticated requests
+headers = {"Authorization": f"Bearer {token}"}
+
+students = requests.get(
+    f"{API_URL}/api/students/",
+    headers=headers
+)
+
+print(f"✅ Retrieved {len(students.json())} students")
+
+# Step 3: Handle token expiration
+try:
+    data = requests.get(
+        f"{API_URL}/api/students/",
+        headers=headers
+    )
+    
+    if data.status_code == 401:
+        print("❌ Token expired, need to login again")
+        # Redirect to login or refresh token
+        
+except Exception as e:
+    print(f"❌ Error: {e}")
+```
+
+### Security Best Practices
+
+1. **Store tokens securely**
+   - Never store tokens in plain text
+   - Use secure storage (browser: localStorage with HTTPS, server: encrypted database)
+   
+2. **Transmit over HTTPS only**
+   - All API requests must use HTTPS (never HTTP)
+   - Tokens can be intercepted if sent over unencrypted connections
+   
+3. **Include token in requests**
+   - Always include Authorization header
+   - Never send token in URL query parameters
+   
+4. **Handle token expiration**
+   - Implement logic to detect 401 responses
+   - Automatic redirect to login when token expires
+   
+5. **Never share tokens**
+   - Each user should have their own token
+   - Don't hardcode tokens in source code
 
 ### User Roles & Permissions
 

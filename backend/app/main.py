@@ -90,33 +90,62 @@ Sistema completo de gestión de asistencia escolar con códigos QR, diseñado pa
 
 ### Seguridad
 
-* Autenticación JWT
+* **Autenticación JWT (Bearer Token)**: Estándar seguro de tokens JWT con RFC 6750
 * Control de acceso basado en roles
 * Protección contra escaneos duplicados
 * Validación de tiempo mínimo de permanencia
 * Alertas de salida anticipada
 
+### Autenticación: JWT Bearer Token
+
+**Tipo**: Bearer Token (RFC 6750) con JWT (RFC 7519) - HS256 Algorithm
+
+**Flujo de Autenticación**:
+1. Envía credenciales (usuario/contraseña) a `/api/auth/login`
+2. Recibe token JWT válido por 24 horas
+3. Incluye token en header: `Authorization: Bearer {token}`
+4. API valida firma JWT y procesa solicitud
+
+**Ejemplo**:
+```bash
+# 1. Login
+curl -X POST https://arrivapp-backend.onrender.com/api/auth/login \\
+  -H "Content-Type: application/json" \\
+  -d '{"username":"admin", "password":"password123"}'
+
+# 2. Usar token
+curl -X GET https://arrivapp-backend.onrender.com/api/schools/ \\
+  -H "Authorization: Bearer eyJhbGc..."
+```
+
+**Seguridad**:
+- ✅ Todos los endpoints requieren autenticación (excepto login/init-admin)
+- ✅ Token firmado criptográficamente
+- ✅ Transmisión solo por HTTPS
+- ✅ Validación de expiración automática (401 Unauthorized)
+
 ### Documentación
 
-* 📖 **[API User Guide](https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_USER_GUIDE.md)** - Guía completa de uso de la API con ejemplos
-* 🔍 **[Error Codes Reference](https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_ERROR_CODES.md)** - Lista completa de códigos de error y soluciones
+* 📖 **[API User Guide](https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_USER_GUIDE.md)** - Guía completa de uso de la API con ejemplos y autenticación JWT
+* � **[Authentication Guide](https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_AUTHENTICATION.md)** - Referencia detallada de autenticación Bearer Token, JWT, RFC 6750/7519
+* �🔍 **[Error Codes Reference](https://github.com/arrivapppilot-dotcom/ArrivApp/blob/main/API_ERROR_CODES.md)** - Lista completa de códigos de error y soluciones
 
 ### Cómo Empezar
 
-1. **Autenticación**: Usa el endpoint `/api/auth/login` para obtener un token JWT
-2. **Obtén Escuelas**: Usa `/api/schools/` para listar todas las escuelas
+1. **Autenticación JWT**: Usa el endpoint `/api/auth/login` para obtener un token Bearer
+2. **Obtén Escuelas**: Usa `/api/schools/` con el token en Authorization header
 3. **Explora Datos**: Usa los otros endpoints para obtener estudiantes, asistencias, etc.
 
 ### Autores
 Desarrollado para facilitar la gestión de asistencia escolar de forma moderna y eficiente.
 
-**Versión:** 2.0.3 | **Última actualización:** Noviembre 21, 2025
+**Versión:** 2.0.3 | **Última actualización:** Noviembre 21, 2025 | **Autenticación:** JWT Bearer Token
 """
 
 tags_metadata = [
     {
         "name": "Authentication",
-        "description": "Operaciones de autenticación y gestión de sesiones. Incluye login, logout y verificación de usuario actual. Devuelve JWT token para usar en otros endpoints.",
+        "description": "Operaciones de autenticación y gestión de sesiones. **Tipo: JWT Bearer Token (RFC 6750/7519, HS256)**. Incluye login, logout y verificación de usuario actual. Devuelve JWT token válido por 24 horas para usar en otros endpoints. Header requerido: `Authorization: Bearer {token}`. Consulta la guía de API para detalles de seguridad.",
     },
     {
         "name": "Users",
