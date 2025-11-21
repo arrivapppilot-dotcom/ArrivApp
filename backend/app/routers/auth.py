@@ -136,3 +136,25 @@ async def init_admin(db: Session = Depends(get_db)):
             "traceback": traceback.format_exc(),
             "status": "failed"
         }
+
+
+@router.post("/reset-admin-password")
+async def reset_admin_password(new_password: str, db: Session = Depends(get_db)):
+    """Emergency endpoint to reset admin password (no auth required for setup)."""
+    admin = db.query(User).filter(User.username == "admin").first()
+    
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin user not found"
+        )
+    
+    # Hash the new password
+    admin.hashed_password = get_password_hash(new_password)
+    db.commit()
+    
+    return {
+        "message": "Admin password reset successfully",
+        "username": "admin",
+        "password": new_password
+    }
