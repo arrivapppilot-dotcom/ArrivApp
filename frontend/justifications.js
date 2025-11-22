@@ -48,8 +48,8 @@ async function init() {
         
         document.getElementById('userInfo').textContent = `${currentUser.full_name || currentUser.username}`;
 
-        // Show review tab for staff
-        if (currentUser.is_admin || currentUser.role !== 'teacher') {
+        // Show review tab for staff (admin, director, teacher)
+        if (currentUser.is_admin || currentUser.role === 'director' || currentUser.role === 'teacher') {
             document.getElementById('tab-review').classList.remove('hidden');
         }
 

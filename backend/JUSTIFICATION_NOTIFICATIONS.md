@@ -1,9 +1,66 @@
 # Justification Notification System - ArrivApp
 
 ## Overview
-The justification notification system automatically sends emails to parents at key stages of the justification workflow, keeping them informed about the status of their submitted justifications.
+The justification notification system automatically sends emails to parents at key stages of the justification workflow, keeping them informed about the status of their submitted justifications. Teachers, directors, and admins can review and approve/reject justifications.
 
-## Notification Types
+## Access Levels
+
+### Parents (Public)
+- **Submit** justifications via parent portal (public endpoint)
+- **View** their own submitted justifications
+- **Receive** email notifications when status changes
+
+### Teachers
+- **View** all justifications for students in their school
+- **Approve/Reject** justifications for students in their school
+- **Add notes** when reviewing justifications
+- **Access** via Justifications page with "Revisar (Staff)" tab
+
+### Directors
+- **View** all justifications for students in their school
+- **Approve/Reject** justifications for students in their school
+- **Add notes** when reviewing justifications
+- **Manage** teachers and class assignments
+- **Access** via Justifications page with "Revisar (Staff)" tab
+
+### Admins
+- **View** all justifications across all schools
+- **Approve/Reject** any justification
+- **Filter** by school, student, type, status, and date
+- **Access** via Justifications page with "Revisar (Staff)" tab
+
+---
+
+## Teacher Justifications Workflow
+
+### Workflow for Teachers
+
+1. **Login** with teacher credentials
+2. **Navigate** to Justifications page
+3. **View tabs:**
+   - **Nueva Justificación:** Parents use this (not available to teachers)
+   - **Ver Justificaciones:** View all justifications for their school
+   - **Revisar (Staff):** Review and approve/reject pending justifications
+4. **Approve/Reject Justifications:**
+   - Click "Revisar" button on pending justification
+   - Review student name, type, date, and reason
+   - Select "Aprobado" (Approved) or "Rechazado" (Rejected)
+   - Add optional notes (e.g., "Appointment confirmation provided")
+   - Submit decision
+   - **Parent receives email** with approval/rejection status
+
+### Teacher Permissions
+- ✅ Can view all justifications for their school
+- ✅ Can approve/reject justifications for any student in their school
+- ✅ Can add notes/observations when reviewing
+- ✅ Cannot delete justifications
+- ✅ Cannot modify student records
+- ✅ School-scoped filtering (only see their school's data)
+
+### Email Notifications for Teachers
+Teachers do NOT receive emails for justifications. However, when they approve/reject a justification, the **parent** receives an email notification immediately.
+
+---
 
 ### 1. Justification Submission Confirmation
 **Trigger:** Parent submits a new justification  
