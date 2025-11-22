@@ -697,7 +697,7 @@
         async function loadJustificationsForTable(date) {
             const token = localStorage.getItem('arrivapp_token');
             try {
-                // Fetch all justifications for the selected date
+                // Fetch all justifications for the selected date (no status filter)
                 const url = new URL(`${API_URL}/justifications`, window.location.origin);
                 url.searchParams.append('start_date', date);
                 url.searchParams.append('end_date', date);
@@ -723,6 +723,7 @@
                         'rejected': '✗ Rechazada'
                     };
                     
+                    // Show all justifications (pending, approved, rejected)
                     const justificationsData = justifications.map(j => ({
                         alumno: j.student_name || `Alumno #${j.student_id}`,
                         tipo: typeLabels[j.justification_type] || j.justification_type,
@@ -730,7 +731,11 @@
                         estado: statusLabels[j.status] || j.status
                     }));
                     
-                    updateTableUI('justifiedStudentsTable', justificationsData, 4);
+                    if (justificationsData.length === 0) {
+                        showNoData('justifiedStudentsTable', 4);
+                    } else {
+                        updateTableUI('justifiedStudentsTable', justificationsData, 4);
+                    }
                 } else {
                     console.error('Failed to load justifications:', response.status);
                     showNoData('justifiedStudentsTable', 4);
