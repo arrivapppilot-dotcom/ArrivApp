@@ -698,7 +698,7 @@
             const token = localStorage.getItem('arrivapp_token');
             try {
                 // Fetch all justifications for the selected date (no status filter)
-                const url = new URL(`${API_URL}/justifications`, window.location.origin);
+                const url = new URL(`${API_URL}/justifications/`, window.location.origin);
                 url.searchParams.append('start_date', date);
                 url.searchParams.append('end_date', date);
                 
