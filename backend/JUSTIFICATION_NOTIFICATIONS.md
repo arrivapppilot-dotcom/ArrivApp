@@ -11,10 +11,12 @@ The justification notification system automatically sends emails to parents at k
 - **Receive** email notifications when status changes
 
 ### Teachers
-- **View** all justifications for students in their school
-- **Approve/Reject** justifications for students in their school
+- **View** justifications for students in their **assigned classes** only (school-scoped)
+- **Approve/Reject** justifications for students in their assigned classes
 - **Add notes** when reviewing justifications
-- **Access** via Justifications page with "Revisar (Staff)" tab
+- **Submit** justifications for students in their assigned classes (on behalf of parents)
+- **Delete** justifications for students in their assigned classes
+- **Access** via Justifications page with full access to all three tabs
 
 ### Directors
 - **View** all justifications for students in their school
@@ -37,25 +39,53 @@ The justification notification system automatically sends emails to parents at k
 
 1. **Login** with teacher credentials
 2. **Navigate** to Justifications page
-3. **View tabs:**
-   - **Nueva Justificación:** Parents use this (not available to teachers)
-   - **Ver Justificaciones:** View all justifications for their school
+3. **Available Tabs (All Functional for Teachers):**
+   - **Nueva Justificación:** Submit justifications for students in their assigned classes
+   - **Ver Justificaciones:** View all justifications for students in their assigned classes
    - **Revisar (Staff):** Review and approve/reject pending justifications
-4. **Approve/Reject Justifications:**
-   - Click "Revisar" button on pending justification
-   - Review student name, type, date, and reason
-   - Select "Aprobado" (Approved) or "Rechazado" (Rejected)
-   - Add optional notes (e.g., "Appointment confirmation provided")
-   - Submit decision
-   - **Parent receives email** with approval/rejection status
+
+### Three Main Teacher Actions:
+
+#### 1. Submit Justifications
+- Navigate to "Nueva Justificación" tab
+- Select a student from their **assigned classes only**
+- Fill in type (Ausencia, Retraso, Salida Anticipada), date, and reason
+- Submit the justification
+- **Parent receives confirmation email**
+- Example use case: Teacher submits absence justification for a student's medical appointment
+
+#### 2. Review & Approve/Reject
+- Go to "Revisar (Staff)" tab
+- See all pending justifications for their assigned classes
+- Click "Revisar" on any pending justification
+- Review details and add optional notes
+- Select "Aprobado" or "Rechazado"
+- Submit decision
+- **Parent receives approval/rejection email immediately**
+
+#### 3. Delete Justifications
+- Go to "Ver Justificaciones" tab
+- Find the justification (filters available)
+- Click delete/remove (if UI supports it)
+- Justification is removed from system
+
+### Teacher Class Scope
+- Teachers ONLY see students from their **assigned classes**
+- When created/updated, teachers are assigned specific classes (e.g., "3A", "4B")
+- All operations (view, submit, review, delete) respect this class assignment
+- Cannot see or interact with students outside their classes
+- Cannot see justifications from other teachers' classes
 
 ### Teacher Permissions
-- ✅ Can view all justifications for their school
-- ✅ Can approve/reject justifications for any student in their school
+- ✅ Can view justifications for students in their assigned classes
+- ✅ Can submit justifications for students in their assigned classes
+- ✅ Can approve/reject justifications for students in their assigned classes
+- ✅ Can delete justifications for students in their assigned classes
 - ✅ Can add notes/observations when reviewing
-- ✅ Cannot delete justifications
-- ✅ Cannot modify student records
-- ✅ School-scoped filtering (only see their school's data)
+- ✅ Can filter by status, type, date range
+- ❌ Cannot see students outside their assigned classes
+- ❌ Cannot modify student records
+- ❌ Cannot see other schools' data
 
 ### Email Notifications for Teachers
 Teachers do NOT receive emails for justifications. However, when they approve/reject a justification, the **parent** receives an email notification immediately.
