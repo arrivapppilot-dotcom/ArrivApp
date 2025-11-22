@@ -382,7 +382,7 @@ function getCurrentUserSchool() {
 async function loadClassesForTeacher() {
     try {
         // Add cache-busting headers to ensure fresh response
-        const response = await apiRequest('/api/users/classes', {
+        const response = await apiRequest('/api/checkin/classes', {
             headers: {
                 'Cache-Control': 'no-cache',
                 'Pragma': 'no-cache'
@@ -391,8 +391,9 @@ async function loadClassesForTeacher() {
         const select = document.getElementById('teacherClasses');
         select.innerHTML = '';
         
-        if (response.classes && Array.isArray(response.classes)) {
-            response.classes.forEach(className => {
+        // /api/checkin/classes returns an array directly, not {classes: [...]}
+        if (Array.isArray(response)) {
+            response.forEach(className => {
                 const option = document.createElement('option');
                 option.value = className;
                 option.textContent = className;
