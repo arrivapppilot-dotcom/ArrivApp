@@ -117,18 +117,18 @@ async def get_attendance_with_absences(
 ):
     """Get attendance history including absent students with notification status"""
     
-    # Parse dates
+    # Parse dates - IMPORTANT: CheckIn times are stored in UTC
     if start_date:
         date_obj = datetime.strptime(start_date, "%Y-%m-%d")
         start_datetime = date_obj.replace(hour=0, minute=0, second=0)
     else:
-        start_datetime = datetime.now().replace(hour=0, minute=0, second=0)
+        start_datetime = datetime.utcnow().replace(hour=0, minute=0, second=0)
     
     if end_date:
         date_obj = datetime.strptime(end_date, "%Y-%m-%d")
         end_datetime = date_obj.replace(hour=23, minute=59, second=59)
     else:
-        end_datetime = datetime.now().replace(hour=23, minute=59, second=59)
+        end_datetime = datetime.utcnow().replace(hour=23, minute=59, second=59)
     
     # Build student query for authorization
     student_query = db.query(Student)
@@ -163,6 +163,10 @@ async def get_attendance_with_absences(
         checkins = checkins.filter(Student.school_id == current_user.school_id)
     elif school_id and current_user.role == UserRole.admin:
         checkins = checkins.filter(Student.school_id == school_id)
+    
+    # Filter by class
+    if class_name:
+        checkins = checkins.filter(Student.class_name == class_name)
     
     checkins = checkins.all()
     checkin_student_ids = set(c.student_id for c in checkins)
