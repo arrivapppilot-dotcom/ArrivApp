@@ -557,11 +557,9 @@
             const selectedClass = classFilter ? classFilter.value : '';
             
             try {
-                // Build URL with proper query parameters
-                const url = new URL(`${API_URL}/reports/statistics`, window.location.origin);
-                url.searchParams.append('period', 'daily');
-                url.searchParams.append('start_date', today);
-                url.searchParams.append('end_date', today);
+                // Build URL with proper query parameters - use /checkin/dashboard endpoint
+                const url = new URL(`${API_URL}/checkin/dashboard`, window.location.origin);
+                url.searchParams.append('date_filter', today);
                 
                 // Add school filter if selected
                 if (selectedSchool) {
@@ -571,7 +569,7 @@
                 
                 // Add class filter if selected
                 if (selectedClass) {
-                    url.searchParams.append('class_name', selectedClass);
+                    url.searchParams.append('class_filter', selectedClass);
                     console.log('[DEBUG] Filtering by class:', selectedClass);
                 }
                 
@@ -604,10 +602,12 @@
         function updateDashboard(data) {
             console.log('[DEBUG] Dashboard data received:', data);
             
-            const total = data.total_students || 0;
-            const present = data.present || 0;
-            const late = data.late || 0;
-            const absent = total - present;
+            // Parse response from /checkin/dashboard endpoint
+            const stats = data.stats || {};
+            const total = stats.total_present + stats.total_absent || 0;
+            const present = stats.total_present || 0;
+            const late = stats.total_late || 0;
+            const absent = stats.total_absent || 0;
             
             console.log(`[DEBUG] Stats: total=${total}, present=${present}, late=${late}, absent=${absent}`);
             
