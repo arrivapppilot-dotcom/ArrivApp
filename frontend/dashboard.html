@@ -228,7 +228,10 @@
 
         <!-- Tables -->
         <div class="section">
-            <div class="section-title">✓ Alumnos con Justificantes</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div class="section-title" style="margin-bottom: 0;">✓ Alumnos con Justificantes</div>
+                <button class="btn btn-reports" onclick="window.location.href='justifications.html'" title="Ver todas las justificaciones">Ver Justificaciones →</button>
+            </div>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Alumno</th><th>Tipo</th><th>Fecha</th><th>Estado</th></tr></thead>
@@ -673,8 +676,10 @@
                     
                     console.log(`Late: ${late.length}, Present: ${present.length}, Absent: ${absent.length}`);
                     
+                    // Load and display justifications
+                    await loadJustificationsForTable(today);
+                    
                     // Update tables
-                    updateTableUI('justifiedStudentsTable', [], 4);
                     updateTableUI('unregisteredStudentsTable', [], 4);
                     updateTableUI('lateArrivalsTable', late, 5);
                     updateTableUI('presentStudentsTable', present, 5);
@@ -686,6 +691,53 @@
             } catch (error) {
                 console.error('Error loading table data:', error);
                 showAllTablesNoData();
+            }
+        }
+
+        async function loadJustificationsForTable(date) {
+            const token = localStorage.getItem('arrivapp_token');
+            try {
+                // Fetch all justifications for the selected date
+                const url = new URL(`${API_URL}/justifications`, window.location.origin);
+                url.searchParams.append('start_date', date);
+                url.searchParams.append('end_date', date);
+                
+                const response = await fetch(url.toString(), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const justifications = await response.json();
+                    console.log(`Loaded ${justifications.length} justifications for ${date}`);
+                    
+                    // Format justifications for table display
+                    const typeLabels = {
+                        'absence': '🏠 Ausencia',
+                        'tardiness': '⏰ Retraso',
+                        'early_dismissal': '🚪 Salida Anticipada'
+                    };
+                    
+                    const statusLabels = {
+                        'pending': '⏳ Pendiente',
+                        'approved': '✓ Aprobada',
+                        'rejected': '✗ Rechazada'
+                    };
+                    
+                    const justificationsData = justifications.map(j => ({
+                        alumno: j.student_name || `Alumno #${j.student_id}`,
+                        tipo: typeLabels[j.justification_type] || j.justification_type,
+                        fecha: new Date(j.date).toLocaleDateString('es-ES'),
+                        estado: statusLabels[j.status] || j.status
+                    }));
+                    
+                    updateTableUI('justifiedStudentsTable', justificationsData, 4);
+                } else {
+                    console.error('Failed to load justifications:', response.status);
+                    showNoData('justifiedStudentsTable', 4);
+                }
+            } catch (error) {
+                console.error('Error loading justifications:', error);
+                showNoData('justifiedStudentsTable', 4);
             }
         }
 
