@@ -24,8 +24,18 @@
             .text-3xl { font-size: 1.5rem; }
             .text-xl { font-size: 1.125rem; }
             nav { padding: 0.5rem 0; }
-            .flex.space-x-8 { gap: 1rem; overflow-x: auto; }
-            .tab-btn { padding: 0.5rem 0.5rem; font-size: 0.875rem; white-space: nowrap; }
+            .flex.space-x-8 { 
+                gap: 0.5rem;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            .tab-btn { 
+                padding: 0.5rem 0.75rem; 
+                font-size: 0.8rem; 
+                white-space: nowrap; 
+                flex-shrink: 0;
+            }
             .max-w-2xl { max-width: 100%; }
             .p-6 { padding: 1rem; }
             .space-y-4 > * + * { margin-top: 0.75rem; }
@@ -34,6 +44,19 @@
         @media (max-width: 640px) {
             .px-4 { padding-left: 0.5rem; padding-right: 0.5rem; }
             .sm\:px-6 { padding-left: 0.5rem; padding-right: 0.5rem; }
+            .flex.space-x-8 {
+                gap: 0.25rem;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            .tab-btn { 
+                padding: 0.5rem 0.5rem; 
+                font-size: 0.75rem; 
+                white-space: nowrap; 
+                flex-shrink: 0;
+                min-width: fit-content;
+            }
             .flex.space-x-2 { 
                 gap: 0.5rem;
                 flex-wrap: wrap;
