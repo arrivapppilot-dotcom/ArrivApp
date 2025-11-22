@@ -58,6 +58,21 @@
         .role-admin { background: #fee2e2; color: #991b1b; }
         .role-director { background: #dbeafe; color: #1e40af; }
         .role-teacher { background: #dbeafe; color: #0f766e; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-present { background: #d1fae5; color: #065f46; }
+        .status-absent { background: #fee2e2; color: #991b1b; }
+        .status-late { background: #fef3c7; color: #92400e; }
+        .status-sent { background: #d1fae5; color: #065f46; }
+        .status-notsent { background: #f3f4f6; color: #6b7280; }
         @media (max-width: 1024px) {
             .btn { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
         }
@@ -137,7 +152,7 @@
 
         <!-- Main Stats -->
         <div class="section">
-            <div class="section-title">📊 Estadísticas Generales</div>
+            <div class="section-title">Estadísticas Generales</div>
             
             <div class="stats-grid">
                 <div class="stat-card">
@@ -156,7 +171,7 @@
 
             <div class="two-column">
                 <div>
-                    <h4 style="font-weight: 600; margin-bottom: 1rem;">✓ Llegada Puntual</h4>
+                    <h4 style="font-weight: 600; margin-bottom: 1rem;">Llegada Puntual</h4>
                     <div class="sub-stats">
                         <div class="sub-stat">
                             <div class="sub-stat-label">Puntual</div>
@@ -165,7 +180,7 @@
                     </div>
                 </div>
                 <div>
-                    <h4 style="font-weight: 600; margin-bottom: 1rem;">⏰ Llegada con Retraso</h4>
+                    <h4 style="font-weight: 600; margin-bottom: 1rem;">Llegada con Retraso</h4>
                     <div class="sub-stats">
                         <div class="sub-stat">
                             <div class="sub-stat-label">Con Retraso</div>
@@ -177,7 +192,7 @@
 
             <div class="two-column">
                 <div>
-                    <h4 style="font-weight: 600; margin-bottom: 1rem;">📝 Detalles de Retraso</h4>
+                    <h4 style="font-weight: 600; margin-bottom: 1rem;">Detalles de Retraso</h4>
                     <div class="sub-stats" style="grid-template-columns: 1fr 1fr;">
                         <div class="sub-stat">
                             <div class="sub-stat-label">Con Previso</div>
@@ -218,7 +233,7 @@
                 </div>
             </div>
             <div class="section">
-                <div class="section-title">✓ Justificantes</div>
+                <div class="section-title">Justificantes</div>
                 <div class="sub-stat">
                     <div class="sub-stat-label">Tasa Justificantes</div>
                     <div class="sub-stat-value" id="justificationRate">-</div>
@@ -229,7 +244,7 @@
         <!-- Tables -->
         <div class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <div class="section-title" style="margin-bottom: 0;">✓ Alumnos con Justificantes</div>
+                <div class="section-title" style="margin-bottom: 0;">Alumnos con Justificantes</div>
                 <button class="btn btn-reports" onclick="window.location.href='justifications.html'" title="Ver todas las justificaciones">Ver Justificaciones →</button>
             </div>
             <div class="table-container">
@@ -251,7 +266,7 @@
         </div>
 
         <div class="section">
-            <div class="section-title">⏰ Alumnos Llegada Tarde</div>
+            <div class="section-title">Alumnos Llegada Tarde</div>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Alumno</th><th>Hora Llegada</th><th>Retraso</th><th>Email Padres</th><th>Justificante</th></tr></thead>
@@ -261,7 +276,7 @@
         </div>
 
         <div class="section">
-            <div class="section-title">✓ Alumnos Presentes</div>
+            <div class="section-title">Alumnos Presentes</div>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Alumno</th><th>Hora Entrada</th><th>Hora Salida</th><th>Email Padres</th><th>Estado</th></tr></thead>
@@ -271,7 +286,7 @@
         </div>
 
         <div class="section">
-            <div class="section-title">❌ Alumnos Ausentes</div>
+            <div class="section-title">Alumnos Ausentes</div>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Alumno</th><th>Clase</th><th>Colegio</th><th>Email Padres</th><th>Estado</th></tr></thead>
@@ -650,8 +665,8 @@
                                 alumno: record.student_name,
                                 clase: record.class_name || '-',
                                 colegio: record.school_name || '-',
-                                email_padres: record.email_sent ? '✓ Enviado' : '✗ No enviado',
-                                estado: 'Ausente'
+                                email_padres: record.email_sent ? '<span class="status-badge status-sent">Enviado</span>' : '<span class="status-badge status-notsent">No enviado</span>',
+                                estado: '<span class="status-badge status-absent">Ausente</span>'
                             });
                         } else if (record.is_late) {
                             // Late arrival
@@ -659,8 +674,8 @@
                                 alumno: record.student_name,
                                 hora_llegada: new Date(record.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
                                 retraso: '5 min',
-                                email_padres: record.email_sent ? '✓ Enviado' : '✗ No enviado',
-                                justificante: record.email_sent ? '✓ Sí' : '-'
+                                email_padres: record.email_sent ? '<span class="status-badge status-sent">Enviado</span>' : '<span class="status-badge status-notsent">No enviado</span>',
+                                justificante: record.email_sent ? '<span class="status-badge status-approved">Sí</span>' : '<span class="status-badge status-notsent">-</span>'
                             });
                         } else {
                             // Present on time
@@ -668,8 +683,8 @@
                                 alumno: record.student_name,
                                 hora_entrada: new Date(record.checkin_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
                                 hora_salida: record.checkout_time ? new Date(record.checkout_time).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}) : '-',
-                                email_padres: record.email_sent ? '✓ Enviado' : '✗ No enviado',
-                                estado: 'Presente'
+                                email_padres: record.email_sent ? '<span class="status-badge status-sent">Enviado</span>' : '<span class="status-badge status-notsent">No enviado</span>',
+                                estado: '<span class="status-badge status-present">Presente</span>'
                             });
                         }
                     });
@@ -712,15 +727,15 @@
                     
                     // Format justifications for table display
                     const typeLabels = {
-                        'absence': '🏠 Ausencia',
-                        'tardiness': '⏰ Retraso',
-                        'early_dismissal': '🚪 Salida Anticipada'
+                        'absence': 'Ausencia',
+                        'tardiness': 'Retraso',
+                        'early_dismissal': 'Salida Anticipada'
                     };
                     
                     const statusLabels = {
-                        'pending': '⏳ Pendiente',
-                        'approved': '✓ Aprobada',
-                        'rejected': '✗ Rechazada'
+                        'pending': '<span class="status-badge status-pending">Pendiente</span>',
+                        'approved': '<span class="status-badge status-approved">Aprobada</span>',
+                        'rejected': '<span class="status-badge status-rejected">Rechazada</span>'
                     };
                     
                     // Show all justifications (pending, approved, rejected)
