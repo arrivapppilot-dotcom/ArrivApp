@@ -11,6 +11,11 @@ from app.models.schemas import (
     JustificationUpdate, 
     Justification as JustificationSchema
 )
+from app.services.email_service import (
+    send_email, 
+    send_justification_submitted_notification,
+    send_justification_reviewed_notification
+)
 
 router = APIRouter(prefix="/api/justifications", tags=["Justifications"])
 
@@ -92,6 +97,19 @@ async def create_justification(
         db.add(db_justification)
         db.commit()
         db.refresh(db_justification)
+        
+        # Send confirmation email to parent
+        try:
+            date_str = db_justification.date.strftime('%d/%m/%Y') if isinstance(db_justification.date, date) else str(db_justification.date)
+            await send_justification_submitted_notification(
+                parent_email=justification.submitted_by,
+                student_name=student.name,
+                justification_type=justification.justification_type,
+                date_str=date_str
+            )
+        except Exception as e:
+            print(f"Warning: Failed to send justification submission email: {str(e)}")
+            # Don't fail the request if email fails
         
         # Convert enums to strings for response
         return {
@@ -222,6 +240,21 @@ async def update_justification(
         justification.status = JustificationStatus[justification_update.status]
         justification.reviewed_by = current_user.id
         justification.reviewed_at = datetime.utcnow()
+        
+        # Send approval/rejection email to parent
+        try:
+            date_str = justification.date.strftime('%d/%m/%Y') if isinstance(justification.date, date) else str(justification.date)
+            await send_justification_reviewed_notification(
+                parent_email=justification.submitted_by,
+                student_name=student.name,
+                justification_type=justification.justification_type.value,
+                date_str=date_str,
+                status=justification_update.status,
+                notes=justification_update.notes
+            )
+        except Exception as e:
+            print(f"Warning: Failed to send justification review email: {str(e)}")
+            # Don't fail the request if email fails
     
     if justification_update.notes is not None:
         justification.notes = justification_update.notes

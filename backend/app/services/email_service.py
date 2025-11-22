@@ -98,3 +98,92 @@ A las {current_time}, los siguientes alumnos NO han realizado el check-in hoy:
     body += "---\nArrivApp v2.0"
     
     return await send_email(admin_email, subject, body)
+
+
+async def send_justification_submitted_notification(
+    parent_email: str,
+    student_name: str,
+    justification_type: str,
+    date_str: str
+):
+    """Send confirmation email when parent submits a justification."""
+    type_labels = {
+        'absence': 'Ausencia',
+        'tardiness': 'Retraso',
+        'early_dismissal': 'Salida Anticipada'
+    }
+    
+    justification_label = type_labels.get(justification_type, justification_type)
+    
+    subject = f"ArrivApp: Justificante enviado para {student_name}"
+    body = f"""Hola,
+
+Confirmamos que hemos recibido tu justificante para {student_name}.
+
+Detalles:
+- Estudiante: {student_name}
+- Tipo: {justification_label}
+- Fecha: {date_str}
+- Estado: Pendiente de revisión
+
+Tu justificante ha sido enviado al colegio. La dirección o maestro lo revisará y te notificaremos sobre su aprobación o rechazo.
+
+Si tienes preguntas, por favor contacta con el colegio.
+
+Gracias por usar ArrivApp.
+
+---
+Este es un mensaje automático. Por favor no responder.
+"""
+    
+    return await send_email(parent_email, subject, body)
+
+
+async def send_justification_reviewed_notification(
+    parent_email: str,
+    student_name: str,
+    justification_type: str,
+    date_str: str,
+    status: str,
+    notes: str = None
+):
+    """Send notification when justification is approved or rejected."""
+    type_labels = {
+        'absence': 'Ausencia',
+        'tardiness': 'Retraso',
+        'early_dismissal': 'Salida Anticipada'
+    }
+    
+    status_labels = {
+        'approved': 'Aprobado',
+        'rejected': 'Rechazado'
+    }
+    
+    justification_label = type_labels.get(justification_type, justification_type)
+    status_label = status_labels.get(status, status)
+    status_icon = "✓" if status == "approved" else "✗"
+    
+    subject = f"ArrivApp: Justificante {status_label} para {student_name}"
+    body = f"""{status_icon} Hola,
+
+Te informamos que tu justificante ha sido revisado.
+
+Detalles:
+- Estudiante: {student_name}
+- Tipo: {justification_label}
+- Fecha: {date_str}
+- Estado: {status_label}
+"""
+    
+    if notes:
+        body += f"- Observaciones: {notes}\n"
+    
+    if status == "approved":
+        body += "\nTu justificante ha sido aprobado. Gracias por mantenernos informados.\n"
+    else:
+        body += "\nDesafortunadamente, tu justificante ha sido rechazado. "
+        body += "Por favor, contacta con el colegio si tienes preguntas al respecto.\n"
+    
+    body += "\n---\nEste es un mensaje automático. Por favor no responder."
+    
+    return await send_email(parent_email, subject, body)
