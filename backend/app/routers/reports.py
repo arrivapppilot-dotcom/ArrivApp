@@ -4,7 +4,7 @@ from sqlalchemy import func, and_, or_, Integer, extract
 from typing import Optional, List
 from datetime import datetime, date, timedelta
 from app.core.database import get_db
-from app.models.models import CheckIn, Student, School, User, UserRole, AbsenceNotification
+from app.models.models import CheckIn, Student, School, User, UserRole, AbsenceNotification, Justification, JustificationStatus
 from app.core.deps import get_current_user
 import io
 from reportlab.lib.pagesizes import letter, A4
@@ -295,6 +295,35 @@ async def get_statistics(
     # Students who checked out
     checked_out = query.filter(CheckIn.checkout_time.isnot(None)).count()
     
+    # Count approved justifications for absences in this period
+    # We need to count justifications where:
+    # 1. Type is "absence"
+    # 2. Status is "approved"
+    # 3. Date falls within our period
+    # 4. Student is in the same school/class scope
+    justified_query = db.query(Justification).filter(
+        Justification.status == JustificationStatus.approved,
+        Justification.justification_type.like('%absence%')  # Match "absence" type
+    ).join(Student)
+    
+    if current_user.role in [UserRole.director, UserRole.teacher]:
+        justified_query = justified_query.filter(Student.school_id == current_user.school_id)
+    elif school_id and current_user.role == UserRole.admin:
+        justified_query = justified_query.filter(Student.school_id == school_id)
+    
+    if class_name:
+        justified_query = justified_query.filter(Student.class_name == class_name)
+    
+    # Filter by date range - Justification.date is a DateTime, so we need to convert it
+    justified_query = justified_query.filter(
+        and_(
+            func.date(Justification.date) >= start.date(),
+            func.date(Justification.date) <= end.date()
+        )
+    )
+    
+    justified = justified_query.count()
+    
     # Get total students in scope
     student_query = db.query(Student)
     if current_user.role in [UserRole.director, UserRole.teacher]:
@@ -354,6 +383,7 @@ async def get_statistics(
         "present": present,
         "late": late,
         "checked_out": checked_out,
+        "justified": justified,
         "attendance_rate": round((present / total_students * 100) if total_students > 0 else 0, 2),
         "late_rate": round((late / total_attendance * 100) if total_attendance > 0 else 0, 2),
         "daily_breakdown": daily_breakdown
