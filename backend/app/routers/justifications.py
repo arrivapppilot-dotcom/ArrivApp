@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime, date
 from app.core.database import get_db
 from app.core.deps import get_current_user, get_current_school_user
-from app.models.models import Justification, Student, User, UserRole, JustificationType, JustificationStatus
+from app.models.models import Justification, Student, User, UserRole, JustificationType, JustificationStatus, TeacherClassAssignment
 from app.models.schemas import (
     JustificationCreate, 
     JustificationUpdate, 
@@ -68,21 +68,50 @@ async def options_justifications():
 @router.post("/", response_model=JustificationSchema, status_code=status.HTTP_201_CREATED)
 async def create_justification(
     justification: JustificationCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """Create a new justification (open endpoint for parents)."""
+    """Create a new justification (open for parents and teachers)."""
     try:
         # Verify student exists
         student = db.query(Student).filter(Student.id == justification.student_id).first()
         if not student:
             raise HTTPException(status_code=404, detail="Student not found")
         
-        # Verify the email matches the student's parent email
-        if justification.submitted_by.lower() != student.parent_email.lower():
-            raise HTTPException(
-                status_code=403, 
-                detail="Only the registered parent can submit justifications"
-            )
+        # Authorization checks
+        if current_user.role == UserRole.teacher:
+            # Teachers can only submit for students in their assigned classes
+            if not current_user.school_id:
+                raise HTTPException(
+                    status_code=403, 
+                    detail="Teacher has no assigned school"
+                )
+            
+            # Check if student is in teacher's school
+            if student.school_id != current_user.school_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Student not in your school"
+                )
+            
+            # Check if student is in one of teacher's assigned classes
+            assigned_classes = db.query(TeacherClassAssignment).filter(
+                TeacherClassAssignment.teacher_id == current_user.id
+            ).all()
+            assigned_class_names = [tc.class_name for tc in assigned_classes]
+            
+            if assigned_class_names and student.class_name not in assigned_class_names:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Student not in your assigned classes"
+                )
+        else:
+            # For non-teachers (parents, etc), verify email matches parent email
+            if justification.submitted_by.lower() != student.parent_email.lower():
+                raise HTTPException(
+                    status_code=403, 
+                    detail="Only the registered parent can submit justifications"
+                )
         
         # Create justification
         db_justification = Justification(
@@ -144,7 +173,7 @@ async def get_justifications(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_school_user)
 ):
-    """Get justifications (filtered by school for non-admins)."""
+    """Get justifications (filtered by school for non-admins, by class for teachers)."""
     query = db.query(Justification).join(Student)
     
     # Filter by school for non-admin users
@@ -155,6 +184,19 @@ async def get_justifications(
                 detail="User must be associated with a school"
             )
         query = query.filter(Student.school_id == current_user.school_id)
+        
+        # For teachers, also filter by assigned classes
+        if current_user.role == UserRole.teacher:
+            assigned_classes = db.query(TeacherClassAssignment).filter(
+                TeacherClassAssignment.teacher_id == current_user.id
+            ).all()
+            assigned_class_names = [tc.class_name for tc in assigned_classes]
+            
+            if assigned_class_names:
+                query = query.filter(Student.class_name.in_(assigned_class_names))
+            else:
+                # Teacher with no assigned classes sees nothing
+                return []
     
     # Apply filters
     if student_id:
@@ -201,7 +243,26 @@ async def get_justification(
     
     # Check access rights
     student = db.query(Student).filter(Student.id == justification.student_id).first()
-    if current_user.role != UserRole.admin:
+    
+    if current_user.role == UserRole.teacher:
+        # Teachers can only access justifications for students in their school and assigned classes
+        if student.school_id != current_user.school_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+        
+        assigned_classes = db.query(TeacherClassAssignment).filter(
+            TeacherClassAssignment.teacher_id == current_user.id
+        ).all()
+        assigned_class_names = [tc.class_name for tc in assigned_classes]
+        
+        if assigned_class_names and student.class_name not in assigned_class_names:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Student not in your assigned classes"
+            )
+    elif current_user.role != UserRole.admin:
         if student.school_id != current_user.school_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -228,7 +289,26 @@ async def update_justification(
     
     # Check access rights
     student = db.query(Student).filter(Student.id == justification.student_id).first()
-    if current_user.role != UserRole.admin:
+    
+    if current_user.role == UserRole.teacher:
+        # Teachers can only update justifications for students in their school and assigned classes
+        if student.school_id != current_user.school_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+        
+        assigned_classes = db.query(TeacherClassAssignment).filter(
+            TeacherClassAssignment.teacher_id == current_user.id
+        ).all()
+        assigned_class_names = [tc.class_name for tc in assigned_classes]
+        
+        if assigned_class_names and student.class_name not in assigned_class_names:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Student not in your assigned classes"
+            )
+    elif current_user.role != UserRole.admin:
         if student.school_id != current_user.school_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -281,7 +361,26 @@ async def delete_justification(
     
     # Check access rights
     student = db.query(Student).filter(Student.id == justification.student_id).first()
-    if current_user.role != UserRole.admin:
+    
+    if current_user.role == UserRole.teacher:
+        # Teachers can only delete justifications for students in their school and assigned classes
+        if student.school_id != current_user.school_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied"
+            )
+        
+        assigned_classes = db.query(TeacherClassAssignment).filter(
+            TeacherClassAssignment.teacher_id == current_user.id
+        ).all()
+        assigned_class_names = [tc.class_name for tc in assigned_classes]
+        
+        if assigned_class_names and student.class_name not in assigned_class_names:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Student not in your assigned classes"
+            )
+    elif current_user.role != UserRole.admin:
         if student.school_id != current_user.school_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

@@ -5,7 +5,7 @@ import pandas as pd
 import io
 from app.core.database import get_db
 from app.core.deps import get_current_user, get_current_admin_user, get_current_school_user, get_current_director_or_admin
-from app.models.models import Student, User, UserRole, School
+from app.models.models import Student, User, UserRole, School, TeacherClassAssignment
 from app.models.schemas import StudentCreate, StudentUpdate, Student as StudentSchema, StudentWithSchool
 from app.services.qr_service import generate_qr_code, delete_qr_code
 
@@ -19,7 +19,7 @@ async def get_students(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_school_user)
 ):
-    """Get students filtered by user's school (unless admin)."""
+    """Get students filtered by user's school (and class for teachers)."""
     query = db.query(Student).options(joinedload(Student.school))
     
     # Filter by school for non-admin users
@@ -30,6 +30,19 @@ async def get_students(
                 detail="User must be associated with a school"
             )
         query = query.filter(Student.school_id == current_user.school_id)
+        
+        # For teachers, also filter by assigned classes
+        if current_user.role == UserRole.teacher:
+            assigned_classes = db.query(TeacherClassAssignment).filter(
+                TeacherClassAssignment.teacher_id == current_user.id
+            ).all()
+            assigned_class_names = [tc.class_name for tc in assigned_classes]
+            
+            if assigned_class_names:
+                query = query.filter(Student.class_name.in_(assigned_class_names))
+            else:
+                # Teacher with no assigned classes sees no students
+                return []
     
     students = query.offset(skip).limit(limit).all()
     return students
@@ -41,18 +54,31 @@ async def get_student(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_school_user)
 ):
-    """Get a specific student by ID (filtered by school)."""
+    """Get a specific student by ID (filtered by school and class for teachers)."""
     student = db.query(Student).options(joinedload(Student.school)).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     
-    # Check if user has access to this student's school
+    # Check if user has access to this student
     if current_user.role != UserRole.admin:
         if student.school_id != current_user.school_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied to this student"
             )
+        
+        # For teachers, also check assigned classes
+        if current_user.role == UserRole.teacher:
+            assigned_classes = db.query(TeacherClassAssignment).filter(
+                TeacherClassAssignment.teacher_id == current_user.id
+            ).all()
+            assigned_class_names = [tc.class_name for tc in assigned_classes]
+            
+            if assigned_class_names and student.class_name not in assigned_class_names:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied - student not in your assigned classes"
+                )
     
     return student
 
