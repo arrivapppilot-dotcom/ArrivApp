@@ -4,7 +4,7 @@ from sqlalchemy import func, and_, or_, Integer, extract
 from typing import Optional, List
 from datetime import datetime, date, timedelta
 from app.core.database import get_db
-from app.models.models import CheckIn, Student, School, User, UserRole, AbsenceNotification, Justification, JustificationStatus
+from app.models.models import CheckIn, Student, School, User, UserRole, AbsenceNotification, Justification, JustificationStatus, JustificationType
 from app.core.deps import get_current_user
 import io
 from reportlab.lib.pagesizes import letter, A4
@@ -303,7 +303,7 @@ async def get_statistics(
     # 4. Student is in the same school/class scope
     justified_query = db.query(Justification).filter(
         Justification.status == JustificationStatus.approved,
-        Justification.justification_type.like('%absence%')  # Match "absence" type
+        Justification.justification_type == JustificationType.absence
     ).join(Student)
     
     if current_user.role in [UserRole.director, UserRole.teacher]:
